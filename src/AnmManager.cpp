@@ -1486,8 +1486,8 @@ i32 AnmManager::ExecuteScript(AnmVm *vm)
             vm->flags.flip ^= 1;
             vm->scaleX *= -1.f;
             break;
-        case AnmOpcode_25:
-            vm->flags.flag5 = AnmI32Arg(0);
+        case AnmOpcode_UsePosOffset:
+            vm->flags.usePosOffset = AnmI32Arg(0);
             break;
         case AnmOpcode_FlipY:
             vm->flags.flip ^= 2;
@@ -1508,11 +1508,13 @@ i32 AnmManager::ExecuteScript(AnmVm *vm)
             vm->scaleInterpFinalY = AnmF32Arg(1);
             vm->scaleInterpEndTime = 0;
             break;
-        case AnmOpcode_30:
+        case AnmOpcode_ScaleTime:
             vm->scaleInterpFinalX = AnmF32Arg(0);
             vm->scaleInterpFinalY = AnmF32Arg(1);
+
             vm->scaleInterpEndTime = AnmI16Arg(2);
             vm->scaleInterpTime.InitializeForPopup();
+
             vm->scaleInterpInitialX = vm->scaleX;
             vm->scaleInterpInitialY = vm->scaleY;
             break;
@@ -1529,7 +1531,7 @@ i32 AnmManager::ExecuteScript(AnmVm *vm)
             vm->flags.blendMode = AnmVmBlendMode_InvSrcAlpha;
             break;
         case AnmOpcode_SetPosition:
-            if (vm->flags.flag5 == 0)
+            if (vm->flags.usePosOffset == 0)
             {
                 vm->pos = ZunVec3(AnmF32Arg(0), AnmF32Arg(1), AnmF32Arg(2));
             }
@@ -1547,7 +1549,7 @@ i32 AnmManager::ExecuteScript(AnmVm *vm)
         case AnmOpcode_PosTimeLinear:
             vm->flags.posTime = 0;
         PosTimeDoStuff:
-            if (vm->flags.flag5 == 0)
+            if (vm->flags.usePosOffset == 0)
             {
                 // This was supposedly originally a memcpy, but any sane compiler should compile a struct assignment to
                 // a memcpy
@@ -1568,7 +1570,7 @@ i32 AnmManager::ExecuteScript(AnmVm *vm)
         case AnmOpcode_Stop:
             if (vm->pendingInterrupt == 0)
             {
-                vm->flags.flag13 = 1;
+                vm->flags.isStopped = 1;
                 vm->currentTimeInScript.Decrement(1);
                 goto stop;
             }
@@ -1586,7 +1588,7 @@ i32 AnmManager::ExecuteScript(AnmVm *vm)
             }
 
             vm->pendingInterrupt = 0;
-            vm->flags.flag13 = 0;
+            vm->flags.isStopped = 0;
             if (curInstr->opcode != AnmOpcode_InterruptLabel)
             {
                 if (nextInstr == NULL)
@@ -1605,13 +1607,13 @@ i32 AnmManager::ExecuteScript(AnmVm *vm)
         case AnmOpcode_SetVisibility:
             vm->flags.isVisible = AnmI32Arg(0);
             break;
-        case AnmOpcode_23:
+        case AnmOpcode_AnchorTopLeft:
             vm->flags.anchor = AnmVmAnchor_TopLeft;
             break;
         case AnmOpcode_SetAutoRotate:
             vm->autoRotate = AnmI32Arg(0);
             break;
-        case AnmOpcode_27:
+        case AnmOpcode_UVScrollX:
             vm->uvScrollPos.x += AnmF32Arg(0);
             if (vm->uvScrollPos.x >= 1.0f)
             {
@@ -1622,7 +1624,7 @@ i32 AnmManager::ExecuteScript(AnmVm *vm)
                 vm->uvScrollPos.x += 1.0f;
             }
             break;
-        case AnmOpcode_28:
+        case AnmOpcode_UVScrollY:
             vm->uvScrollPos.y += AnmF32Arg(0);
             if (vm->uvScrollPos.y >= 1.0f)
             {
@@ -1633,7 +1635,7 @@ i32 AnmManager::ExecuteScript(AnmVm *vm)
                 vm->uvScrollPos.y += 1.0f;
             }
             break;
-        case AnmOpcode_31:
+        case AnmOpcode_SetZWriteDisable:
             vm->flags.zWriteDisable = AnmI32Arg(0);
             break;
         case AnmOpcode_Nop:
@@ -1741,7 +1743,7 @@ stop:
             local_3c = 1.0f - local_3c;
             break;
         }
-        if (vm->flags.flag5 == 0)
+        if (vm->flags.usePosOffset == 0)
         {
             vm->pos.x = local_3c * vm->posInterpFinal.x + (1.0f - local_3c) * vm->posInterpInitial.x;
             vm->pos.y = local_3c * vm->posInterpFinal.y + (1.0f - local_3c) * vm->posInterpInitial.y;
