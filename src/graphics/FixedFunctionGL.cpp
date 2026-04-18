@@ -22,7 +22,7 @@ GfxInterface *FixedFunctionGL::Init()
     {
         g_glFuncTable.glShadeModel(GL_FLAT);
     }
-
+    #ifndef __3DS__
     if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_FOG) & 1) == 0)
     {
         g_glFuncTable.glEnable(GL_FOG);
@@ -30,9 +30,8 @@ GfxInterface *FixedFunctionGL::Init()
 
     g_glFuncTable.glFogf(GL_FOG_DENSITY, 1.0f);
     g_glFuncTable.glFogf(GL_FOG_MODE, GL_LINEAR);
-
+    #endif
     g_glFuncTable.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-
     if (((g_Supervisor.cfg.opts >> GCOS_NO_COLOR_COMP) & 1) == 0)
     {
         g_glFuncTable.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
@@ -76,22 +75,25 @@ GfxInterface *FixedFunctionGL::Init()
     }
 
     g_glFuncTable.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-
     return new FixedFunctionGL();
 }
 
 void FixedFunctionGL::SetFogRange(f32 nearPlane, f32 farPlane)
 {
+    #ifndef __3DS__
     g_glFuncTable.glFogf(GL_FOG_START, nearPlane);
     g_glFuncTable.glFogf(GL_FOG_END, farPlane);
+    #endif
 }
 
 void FixedFunctionGL::SetFogColor(ZunColor color)
 {
+    #ifndef __3DS__
     GLfloat normalizedFogColor[4] = {((color >> 16) & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f,
                                      (color & 0xFF) / 255.0f, ((color >> 24) & 0xFF) / 255.0f};
 
     g_glFuncTable.glFogfv(GL_FOG_COLOR, normalizedFogColor);
+    #endif
 }
 
 void FixedFunctionGL::ToggleVertexAttribute(u8 attr, bool enable)
@@ -150,7 +152,6 @@ void FixedFunctionGL::SetColorOp(TextureOpComponent component, ColorOp op)
     {
         return;
     }
-
     GLenum componentEnum = component == COMPONENT_ALPHA ? GL_COMBINE_ALPHA : GL_COMBINE_RGB;
 
     g_glFuncTable.glTexEnvi(GL_TEXTURE_ENV, componentEnum, opEnums[op]);

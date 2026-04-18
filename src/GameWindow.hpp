@@ -14,11 +14,19 @@
 //   At some point there should be a method to change this without recompiling but for now
 //   this'll do
 #ifndef GAME_WINDOW_WIDTH_REAL
+#ifndef __3DS__
 #define GAME_WINDOW_WIDTH_REAL (GAME_WINDOW_WIDTH)
+#else
+#define GAME_WINDOW_WIDTH_REAL 400
+#endif
 #endif
 
 #ifndef GAME_WINDOW_HEIGHT_REAL
+#ifndef __3DS__
 #define GAME_WINDOW_HEIGHT_REAL (GAME_WINDOW_HEIGHT)
+#else
+#define GAME_WINDOW_HEIGHT_REAL 240
+#endif
 #endif
 
 #define VIEWPORT_WIDTH GAME_WINDOW_WIDTH_REAL

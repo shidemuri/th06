@@ -1,3 +1,4 @@
+#define DEBUG
 #ifdef DEBUG
 #include <cstdarg>
 #include <cstdio>
@@ -6,6 +7,15 @@
 #include "ZunMath.hpp"
 #include "i18n.hpp"
 #include "utils.hpp"
+
+u64 startDebug = 0;
+u64 endDebug = 0;
+void setDStart(){
+    startDebug = svcGetSystemTick();
+}
+void setDEnd(){
+    endDebug = svcGetSystemTick();
+}
 
 namespace utils
 {
@@ -19,7 +29,7 @@ void DebugPrint(const char *fmt, ...)
     std::vsnprintf(tmpBuffer, 511, fmt, args);
     va_end(args);
 
-    std::printf("DEBUG2: %s\n", tmpBuffer);
+    printf("DEBUG2: %s\n", tmpBuffer);
 #endif
 }
 
@@ -65,7 +75,7 @@ void DebugPrint2(const char *fmt, ...)
     std::vsnprintf(tmpBuffer, 511, fmt, args);
     va_end(args);
 
-    std::printf("DEBUG2: %s\n", tmpBuffer);
+    printf("DEBUG2: %s\n", tmpBuffer);
 #endif
 }
 }; // namespace utils

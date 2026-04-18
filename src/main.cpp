@@ -1,3 +1,11 @@
+#ifdef __3DS__
+#include <3ds.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <i18n.hpp>
+#include <sys/stat.h>
+#endif
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mouse.h>
 #include <cstdio>
@@ -13,13 +21,26 @@
 #include "ZunResult.hpp"
 #include "i18n.hpp"
 #include "utils.hpp"
-
 int main(int argc, char *argv[])
 {
     (void)argc;
     (void)argv;
 
     i32 renderResult = 0;
+
+    #ifdef __3DS__
+
+    gfxInitDefault();
+    aptInit();
+
+    chdir("/");
+    mkdir("3ds", 0777);
+    chdir("3ds");
+    mkdir("eosd3ds", 0777);
+	chdir("eosd3ds");
+
+    #endif
+
     //    MSG msg;
     //    i32 waste1, waste2, waste3, waste4, waste5, waste6;
 
@@ -53,6 +74,13 @@ int main(int argc, char *argv[])
 
 restart:
     GameWindow::CreateGameWindow();
+    consoleInit(GFX_BOTTOM, NULL);
+
+
+	printf("\x1b[3;1H----------------------------------------");
+	printf("\x1b[4;1HEoSD 3DS unofficial port. Based on:");
+	printf("\x1b[5;1Hhttps://github.com/GensokyoClub/th06/tree/portable");
+	printf("\x1b[6;1HTouhou Project - (c) Team Shanghai Alice");
 
     g_AnmManager = new AnmManager();
 
@@ -70,14 +98,23 @@ restart:
     {
         goto stop;
     }
+
+    #ifndef __3DS__
     if (!g_Supervisor.cfg.windowed)
     {
         SDL_ShowCursor(SDL_DISABLE);
     }
+    #endif
 
     g_GameWindow.curFrame = 0;
 
-    while (true)
+    while (
+        #ifdef __3DS__
+        aptMainLoop()
+        #else
+        true
+        #endif
+    )
     {
         SDL_Event e;
 
@@ -88,13 +125,14 @@ restart:
                 goto stop;
             }
         }
-
         renderResult = g_GameWindow.Render();
         if (renderResult != 0)
         {
             break;
         }
-
+        #ifdef __3DS__
+        gspWaitForVBlank();
+        #endif
         //        SDL_Delay(1000.0f / 60.0f);
 
         //        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
@@ -128,6 +166,7 @@ restart:
     }
 
 stop:
+    printf("renderResult is different than 0. (may exit or restart rendering)\n");
     g_Chain.Release();
     g_SoundPlayer.Release();
 
@@ -135,29 +174,42 @@ stop:
     g_AnmManager = NULL;
 
     SDL_DestroyWindow(g_GameWindow.window);
+
+    #ifndef __3DS__
     SDL_GL_DeleteContext(g_GameWindow.glContext);
+    #else
+    pglExit();
+    #endif
+
     SDL_Quit();
 
     if (renderResult == 2)
     {
+        printf("renderResult == 2. Restarting rendering...\n");
         g_GameErrorContext.ResetContext();
 
         GameErrorContext::Log(&g_GameErrorContext, TH_ERR_OPTION_CHANGED_RESTART);
 
+        #ifndef __3DS__
         if (!g_Supervisor.cfg.windowed)
         {
             SDL_ShowCursor(SDL_ENABLE);
         }
+        #endif
 
         goto restart;
     }
+
+    printf("renderResult == 1. Saving before exiting...\n");
 
     FileSystem::WriteDataToFile(TH_CONFIG_FILE, &g_Supervisor.cfg, sizeof(g_Supervisor.cfg));
     //    SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, g_GameWindow.screenSaveActive, NULL, SPIF_SENDCHANGE);
     //    SystemParametersInfo(SPI_SETLOWPOWERACTIVE, g_GameWindow.lowPowerActive, NULL, SPIF_SENDCHANGE);
     //    SystemParametersInfo(SPI_SETPOWEROFFACTIVE, g_GameWindow.powerOffActive, NULL, SPIF_SENDCHANGE);
 
+    #ifndef __3DS__
     SDL_ShowCursor(SDL_ENABLE);
+    #endif
     g_GameErrorContext.Flush();
     return 0;
 }

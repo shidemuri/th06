@@ -125,7 +125,11 @@ enum EclValueType
     ECL_VALUE_TYPE_UNDEFINED,
 };
 
+#ifdef __3DS__
+struct __attribute__((aligned(4))) Enemy //doesnt do nothing?
+#else
 struct Enemy
+#endif
 {
     Enemy()
     {
@@ -254,3 +258,6 @@ struct Enemy
     f32 exInsFunc6Angle;
     ZunTimer exInsFunc6Timer;
 };
+
+static_assert(sizeof(Enemy) % 4 == 0, "Enemy size breaks alignment");
+static_assert(offsetof(Enemy, position) % 4 == 0, "Enemy::position misaligned");

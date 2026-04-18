@@ -14,6 +14,10 @@
 #include <cstring>
 #include <new>
 
+#ifdef __3DS__
+#include <3ds.h>
+#endif
+
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_rwops.h>
 #include <SDL2/SDL_surface.h>
@@ -98,8 +102,11 @@ u8 *AnmManager::ExtractSurfacePixels(SDL_Surface *src, u8 pixelDepth)
 
     const i32 dstPitch = src->w * pixelDepth;
     const i32 srcPitch = src->pitch;
-
+    #ifndef __3DS__
     u8 *pixelData = new u8[dstPitch * src->h];
+    #else
+    u8 *pixelData = (u8*)linearAlloc(dstPitch * src->h);
+    #endif
     u8 *dstPtr = pixelData;
     u8 *srcPtr = (u8 *)src->pixels;
 
@@ -158,6 +165,13 @@ void AnmManager::ReleaseSurfaces(void)
             SDL_FreeSurface(this->surfaces[idx]);
             this->surfaces[idx] = NULL;
         }
+        #ifdef __3DS__
+        if (this->surfacesCache[idx] != 0)
+        {
+            g_glFuncTable.glDeleteTextures(1, &this->surfacesCache[idx]);
+            this->surfacesCache[idx] = 0;
+        }
+        #endif
     }
 }
 
@@ -364,10 +378,17 @@ ZunResult AnmManager::LoadTexture(i32 textureIdx, char *textureName, i32 texture
 
     rawTextureData = ExtractSurfacePixels(textureSurface, g_TextureFormatBytesPerPixel[textureFormat]);
 
+    u32 texW = BitCeil((u32)textureSurface->w);
+    u32 texH = BitCeil((u32)textureSurface->h);
+
     this->textures[textureIdx].handle = this->currentTextureHandle;
     this->textures[textureIdx].textureData = rawTextureData;
-    this->textures[textureIdx].width = textureSurface->w;
-    this->textures[textureIdx].height = textureSurface->h;
+    this->textures[textureIdx].width = texW;
+    this->textures[textureIdx].height = texH;
+    #ifdef __3DS__
+    this->textures[textureIdx].surfW = textureSurface->w;
+    this->textures[textureIdx].surfH = textureSurface->h;
+    #endif
     this->textures[textureIdx].format = textureFormat;
 
     // Note that the original D3DX call here used D3DX_FILTER_NONE | D3DX_FILTER_POINT for the filter args, which is
@@ -375,9 +396,17 @@ ZunResult AnmManager::LoadTexture(i32 textureIdx, char *textureName, i32 texture
     // of those should be globally disabled for the texture unit anyway This also drops colorKey (an equivalent doesn't
     // exist in OpenGL). I'm not sure its use ever matters anyway
 
-    g_glFuncTable.glTexImage2D(GL_TEXTURE_2D, 0, g_TextureFormatGLFormatMapping[textureFormat], textureSurface->w,
-                               textureSurface->h, 0, g_TextureFormatGLFormatMapping[textureFormat],
-                               g_TextureFormatGLTypeMapping[textureFormat], rawTextureData);
+
+    g_glFuncTable.glTexImage2D(GL_TEXTURE_2D, 0,
+        g_TextureFormatGLFormatMapping[textureFormat],
+        texW, texH, 0,
+        g_TextureFormatGLFormatMapping[textureFormat],
+        g_TextureFormatGLTypeMapping[textureFormat], NULL);
+
+    g_glFuncTable.glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+        textureSurface->w, textureSurface->h,
+        g_TextureFormatGLFormatMapping[textureFormat],
+        g_TextureFormatGLTypeMapping[textureFormat], rawTextureData);
 
     SDL_FreeSurface(textureSurface);
 
@@ -432,11 +461,18 @@ ZunResult AnmManager::LoadTextureAlphaChannel(i32 textureIdx, char *textureName,
     {
     case TEX_FMT_A8R8G8B8:
         dstData8 = dstData;
+        #ifndef __3DS__
         for (y = 0; y < textureDesc->height; y++)
+        #else
+        for (y = 0; y < textureDesc->surfH; y++)
+        #endif
         {
             srcData8 = srcData + alphaSurface->pitch * y;
-
+            #ifndef __3DS__
             for (x = 0; x < textureDesc->width; x++, srcData8 += 4, dstData8 += 4)
+            #else
+            for (x = 0; x < textureDesc->surfW; x++, srcData8 += 4, dstData8 += 4)
+            #endif
             {
                 dstData8[3] = srcData8[0];
             }
@@ -447,11 +483,19 @@ ZunResult AnmManager::LoadTextureAlphaChannel(i32 textureIdx, char *textureName,
 
     case TEX_FMT_A1R5G5B5:
         dstData16 = (u16 *)dstData;
+        #ifndef __3DS__
         for (y = 0; y < textureDesc->height; y++)
+        #else
+        for (y = 0; y < textureDesc->surfH; y++)
+        #endif
         {
             srcData16 = (u16 *)(srcData + alphaSurface->pitch * y);
 
+            #ifndef __3DS__
             for (x = 0; x < textureDesc->width; x++, srcData16++, dstData16++)
+            #else
+            for (x = 0; x < textureDesc->surfW; x++, srcData16++, dstData16++)
+            #endif
             {
                 *dstData16 &= 0xfffe;
                 *dstData16 |= (*srcData16 & 0x8000) >> 15;
@@ -461,11 +505,18 @@ ZunResult AnmManager::LoadTextureAlphaChannel(i32 textureIdx, char *textureName,
 
     case TEX_FMT_A4R4G4B4:
         dstData16 = (u16 *)dstData;
+        #ifndef __3DS__
         for (y = 0; y < textureDesc->height; y++)
+        #else
+        for (y = 0; y < textureDesc->surfH; y++)
+        #endif
         {
             srcData16 = (u16 *)(srcData + alphaSurface->pitch * y);
-
+            #ifndef __3DS__
             for (x = 0; x < textureDesc->width; x++, srcData16++, dstData16++)
+            #else
+            for (x = 0; x < textureDesc->surfW; x++, srcData16++, dstData16++)
+            #endif
             {
                 *dstData16 &= 0xfff0;
                 *dstData16 |= (*srcData16 & 0xf000) >> 12;
@@ -478,8 +529,9 @@ ZunResult AnmManager::LoadTextureAlphaChannel(i32 textureIdx, char *textureName,
     SDL_FreeSurface(alphaSurface);
 
     this->SetCurrentTexture(this->textures[textureIdx].handle);
-    g_glFuncTable.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureDesc->width, textureDesc->height, 0, GL_RGBA,
-                               g_TextureFormatGLTypeMapping[textureFormat], textureDesc->textureData);
+    g_glFuncTable.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+        textureDesc->width, textureDesc->height, 
+        0, GL_RGBA, g_TextureFormatGLTypeMapping[textureFormat], textureDesc->textureData);
 
     return ZUN_SUCCESS;
 }
@@ -627,7 +679,11 @@ void AnmManager::ReleaseTexture(i32 textureIdx)
     free(this->textures[textureIdx].fileData);
     this->textures[textureIdx].fileData = NULL;
 
+    #ifndef __3DS__
     delete[] this->textures[textureIdx].textureData;
+    #else
+    linearFree(this->textures[textureIdx].textureData);
+    #endif
     this->textures[textureIdx].textureData = NULL;
 }
 
@@ -1778,6 +1834,23 @@ ZunResult AnmManager::LoadSurface(i32 surfaceIdx, const char *path)
         return ZUN_ERROR;
     }
 
+    //cache because transfering the entire background to the gpu every frame to process again and again is very expensive
+    #ifdef __3DS__
+    GLuint previousHandle = this->currentTextureHandle;
+    CreateTextureObject();
+    this->surfacesCache[surfaceIdx] = this->currentTextureHandle;
+    SDL_Surface *surf = this->surfaces[surfaceIdx];
+    u32 texW = BitCeil((u32)surf->w);
+    u32 texH = BitCeil((u32)surf->h);
+    g_glFuncTable.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texW, texH, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    u8 *pixels = ExtractSurfacePixels(surf, 3);
+    g_glFuncTable.glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, surf->w, surf->h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    linearFree(pixels);
+    this->currentTextureHandle = previousHandle;
+    if (previousHandle != 0)
+        g_glFuncTable.glBindTexture(GL_TEXTURE_2D, previousHandle);
+    #endif
+
     return ZUN_SUCCESS;
 
     //    u8 *data = FileSystem::OpenPath(path, 0);
@@ -1855,6 +1928,12 @@ void AnmManager::ReleaseSurface(i32 surfaceIdx)
         SDL_FreeSurface(this->surfaces[surfaceIdx]);
         this->surfaces[surfaceIdx] = NULL;
     }
+    #ifdef __3DS__
+    if (this->surfacesCache[surfaceIdx] != 0) {
+        g_glFuncTable.glDeleteTextures(1, &this->surfacesCache[surfaceIdx]);
+        this->surfacesCache[surfaceIdx] = 0;
+    }
+    #endif
 }
 
 void AnmManager::CopySurfaceToBackBuffer(i32 surfaceIdx, i32 srcX, i32 srcY, i32 dstX, i32 dstY)
@@ -1912,14 +1991,22 @@ void AnmManager::CopySurfaceToBackBuffer(i32 surfaceIdx, i32 srcX, i32 srcY, i32
 void AnmManager::CopySurfaceRectToBackBuffer(i32 surfaceIdx, i32 dstX, i32 dstY, i32 rectLeft, i32 rectTop,
                                              i32 rectWidth, i32 rectHeight)
 {
+    #ifndef __3DS__
     SDL_Surface *srcSurface = this->surfaces[surfaceIdx];
-
+    #else
+    i32 srcSurface = this->surfacesCache[surfaceIdx];
+    #endif
     if (srcSurface == NULL)
     {
         return;
     }
 
-    ApplySurfaceToColorBuffer(srcSurface, (SDL_Rect){.x = rectLeft, .y = rectTop, .w = rectWidth, .h = rectHeight},
+    #ifndef __3DS__
+    ApplySurfaceToColorBuffer(srcSurface,
+    #else
+    ApplySurfaceToColorBuffer(surfaceIdx,
+    #endif
+        (SDL_Rect){.x = rectLeft, .y = rectTop, .w = rectWidth, .h = rectHeight},
                               (SDL_Rect){.x = dstX, .y = dstY, .w = rectWidth, .h = rectHeight});
     //
     //    IDirect3DSurface8 *D3D_Surface;
@@ -2041,11 +2128,22 @@ cleanup:
     SDL_FreeSurface(stretchedSurface);
     SDL_FreeSurface(dstFormatSurface);
     delete[] backBufferPixels;
+    #ifndef __3DS__
     delete[] dstFormatPixels;
+    #else
+    linearFree(dstFormatPixels);
+    #endif
 }
 
 // Utter mess that needs to be rewritten
+
+// and that is correct!
+// this can stall DMA on weaker hardware like the 3DS's gpu 
+#ifndef __3DS__
 void AnmManager::ApplySurfaceToColorBuffer(SDL_Surface *src, const SDL_Rect &srcRect, const SDL_Rect &dstRect)
+#else
+void AnmManager::ApplySurfaceToColorBuffer(i32 src, const SDL_Rect &srcRect, const SDL_Rect &dstRect)
+#endif
 {
     ZunViewport originalViewport;
     ZunViewport fullscreenViewport;
@@ -2066,13 +2164,17 @@ void AnmManager::ApplySurfaceToColorBuffer(SDL_Surface *src, const SDL_Rect &src
 
     fullscreenViewport.Set();
 
+  
     this->SetProjectionMode(PROJECTION_MODE_ORTHOGRAPHIC);
 
+    #ifndef __3DS__
     CreateTextureObject();
+    #endif
+    SDL_Surface* original = this->surfaces[src];
+    u32 textureWidth = BitCeil((u32)original->w);
+    u32 textureHeight = BitCeil((u32)original->h);
 
-    u32 textureWidth = BitCeil((u32)src->w);
-    u32 textureHeight = BitCeil((u32)src->h);
-
+    #ifndef __3DS__
     g_glFuncTable.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE,
                                NULL);
 
@@ -2081,6 +2183,9 @@ void AnmManager::ApplySurfaceToColorBuffer(SDL_Surface *src, const SDL_Rect &src
     g_glFuncTable.glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, src->w, src->h, GL_RGB, GL_UNSIGNED_BYTE, surfaceData);
 
     delete[] surfaceData;
+    #else
+    this->SetCurrentTexture(this->surfacesCache[src]);
+    #endif
 
     VertexTex1DiffuseXyz verts[4];
 
@@ -2090,9 +2195,9 @@ void AnmManager::ApplySurfaceToColorBuffer(SDL_Surface *src, const SDL_Rect &src
     verts[3].position = ZunVec3(dstRect.x + dstRect.w, dstRect.y + dstRect.h, 0.0f);
 
     verts[0].textureUV = ZunVec2(0.0f, 0.0f);
-    verts[1].textureUV = ZunVec2(((f32)src->w) / textureWidth, 0.0f);
-    verts[2].textureUV = ZunVec2(0.0f, ((f32)src->h) / textureHeight);
-    verts[3].textureUV = ZunVec2(((f32)src->w) / textureWidth, ((f32)src->h) / textureHeight);
+    verts[1].textureUV = ZunVec2(((f32)original->w) / textureWidth, 0.0f);
+    verts[2].textureUV = ZunVec2(0.0f, ((f32)original->h) / textureHeight);
+    verts[3].textureUV = ZunVec2(((f32)original->w) / textureWidth, ((f32)original->h) / textureHeight);
 
     this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
 
@@ -2110,7 +2215,9 @@ void AnmManager::ApplySurfaceToColorBuffer(SDL_Surface *src, const SDL_Rect &src
     this->SetColorOp(COMPONENT_ALPHA, COLOR_OP_MODULATE);
     this->SetColorOp(COMPONENT_RGB, COLOR_OP_MODULATE);
 
+    #ifndef __3DS__
     g_glFuncTable.glDeleteTextures(1, &this->currentTextureHandle);
+    #endif
 
     this->SetCurrentSprite(NULL);
     this->SetCurrentTexture(0);

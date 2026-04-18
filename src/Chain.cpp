@@ -152,7 +152,11 @@ restart_from_first_job:
         if (current->callback != NULL)
         {
         execute_again:
-            switch (current->callback(current->arg))
+            current->startDebugTime = svcGetSystemTick();
+            ChainCallbackResult callbackResult = current->callback(current->arg);
+            current->endDebugTime = svcGetSystemTick();
+            printf("\x1b[%d;1H\x1b[32mcalc%02d: %.4f ms\x1b[0m\n", current->priority+1,current->priority, getDebugTimeMs(current->startDebugTime, current->endDebugTime));
+            switch (callbackResult)
             {
             case CHAIN_CALLBACK_RESULT_CONTINUE_AND_REMOVE_JOB:
                 tmp1 = current;
@@ -204,7 +208,11 @@ int Chain::RunDrawChain(void)
         if (current->callback != NULL)
         {
         execute_again:
-            switch (current->callback(current->arg))
+            current->startDebugTime = svcGetSystemTick();
+            ChainCallbackResult callbackResult = current->callback(current->arg);
+            current->endDebugTime = svcGetSystemTick();
+            printf("\x1b[%d;24H\x1b[32mdraw%02d: %.4f ms\x1b[0m\n", current->priority+1,current->priority, getDebugTimeMs(current->startDebugTime, current->endDebugTime));
+            switch (callbackResult)
             {
             case CHAIN_CALLBACK_RESULT_CONTINUE_AND_REMOVE_JOB:
                 tmp1 = current;

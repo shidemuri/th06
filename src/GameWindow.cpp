@@ -27,7 +27,10 @@ static struct
     bool isEsContext;
     void (*setContextFlags)();
     GfxInterface *(*init)();
-} s_RenderBackends[] = {{"GL(ES) 2.0 / WebGL", true, WebGL::SetContextFlags, WebGL::Create},
+} s_RenderBackends[] = {
+    #ifndef __3DS__
+    {"GL(ES) 2.0 / WebGL", true, WebGL::SetContextFlags, WebGL::Create},
+    #endif
                         {"Fixed function GL(ES)", false, FixedFunctionGL::SetContextFlags, FixedFunctionGL::Init}};
 
 RenderResult GameWindow::Render()
@@ -167,7 +170,11 @@ void GameWindow::Present()
 {
     // In D3D, this was done after the present call, but SDL makes no guarantees
     // about the color buffer state immediately after a swap, so it has to be moved to be before it
+
+    //todo: implement that one picagl function that is only used here
+    #ifndef __3DS__
     g_AnmManager->TakeScreenshotIfRequested();
+    #endif
     if (g_Supervisor.unk198 != 0)
     {
         g_Supervisor.unk198--;
@@ -182,7 +189,11 @@ void GameWindow::CreateGameWindow()
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER);
 
+    #ifndef __3DS__
     u32 flags = SDL_WINDOW_OPENGL;
+    #else
+    u32 flags = SDL_WINDOW_FULLSCREEN;
+    #endif 
     i32 height = GAME_WINDOW_HEIGHT_REAL;
     i32 width = GAME_WINDOW_WIDTH_REAL;
     i32 x = SDL_WINDOWPOS_UNDEFINED;
@@ -207,6 +218,7 @@ void GameWindow::CreateGameWindow()
             goto fail;
         }
 
+        #ifndef __3DS__
         g_GameWindow.glContext = SDL_GL_CreateContext(g_GameWindow.window);
 
         if (g_GameWindow.glContext == NULL)
@@ -218,6 +230,10 @@ void GameWindow::CreateGameWindow()
         {
             goto fail;
         }
+        #else
+        pglInit();
+        pglSelectScreen(GFX_TOP,GFX_LEFT);
+        #endif
 
         utils::DebugPrint2("Using renderer backend %s", s_RenderBackends[i].name);
         g_glFuncTable.ResolveFunctions(s_RenderBackends[i].isEsContext);

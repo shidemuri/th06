@@ -100,7 +100,7 @@ struct ZunVec2
     {
         return (f64)this->VectorLength();
     }
-};
+} /*__attribute__((packed))*/; //bleeeeh?;
 static_assert(sizeof(ZunVec2) == 0x08, "ZunVec2 has additional padding between struct members!");
 
 // Replacing all former uses of D3DXVECTOR3
@@ -211,7 +211,7 @@ struct ZunVec3
         bottomRightCorner->x = size->x / 2.0f + centerPosition->x;
         bottomRightCorner->y = size->y / 2.0f + centerPosition->y;
     }
-};
+} __attribute__((packed)); //bleeeeh
 static_assert(sizeof(ZunVec3) == 0x0C, "ZunVec3 has additional padding between struct members!");
 
 struct ZunVec4

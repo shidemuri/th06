@@ -617,7 +617,7 @@ void SoundPlayer::BackgroundMusicPlayerThread()
 {
     SDL_PauseAudioDevice(this->audioDev, 0);
 
-    u32 latencyLimit = 14'700; // ~5 frames
+    u32 latencyLimit = 2940; //~~1 frame just to test if that wont stress the cpu too much //14'700; // ~5 frames
     u64 samplesSent = 0;
     u64 startTick = SDL_GetTicks64();
 

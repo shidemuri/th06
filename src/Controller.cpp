@@ -397,6 +397,8 @@ void Controller::ResetKeyboard(void)
     //   Doesn't work on Wine :( but hopefully works on Windows?
     //   We both start and stop due to this bug https://github.com/libsdl-org/SDL/issues/13172
     //   Since I can't test on Windows, it's good to be on the safe side
+    #ifndef __3DS__
     SDL_StartTextInput();
     SDL_StopTextInput();
+    #endif
 }

@@ -1,0 +1,84 @@
+{
+  "version": "2.0.0",
+  "inputs":[
+        {
+            "id": "ConsoleIP",
+            "type": "promptString",
+            "description": "Remote IP address of the console (can be seen on Rosalina menu if debug is enabled)",
+            "default": "192.168.0.152"
+        },
+        {
+            "id": "EmuIPAndPort",
+            "type": "promptString",
+            "description": "Remote IP address and port of the computer running Azahar (can be set up on Configure/General/Debug/GDB, gdbstub is automatically toggled when running Build&Debug/Build&Run)",
+            "default": "localhost:24689"
+        }
+  ],
+  "tasks": [
+      {
+          "label": "Make",
+          "command": "make",
+          "args":[
+            "-s"
+          ],
+          "group": {
+              "kind": "build"
+          },
+          "presentation": {
+              "reveal": "silent"
+          },
+          "problemMatcher": "$gcc"
+      },
+      {
+        "label": "3dslink launch",
+        "type":"shell",
+        "command": "3dslink",
+        "args":[
+          "-a",
+          "${input:ConsoleIP}",
+          "${workspaceFolderBasename}.3dsx"
+        ],
+        "dependsOn":"Make"
+      },
+      {
+        "label": "Launch Azahar with enabled GDB",
+        "type": "shell",
+        "command": "azahar",
+        "isBackground": true,
+        "problemMatcher": {
+          "pattern": {
+            "regexp": "^$"
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^.*$",
+            "endsPattern": "^.*$"
+          }
+        },
+        "args": [
+          "${workspaceFolderBasename}.3dsx"
+        ],
+        "dependsOn": "Azahar: Enable GDB"
+      },
+      {
+        "label": "Azahar: Enable GDB",
+        "type": "shell",
+        "command": "bash",
+        "args": [
+          "-c",
+          "sed -i \"s/use_gdbstub\\\\\\\\\\\\\\\\default=true/use_gdbstub\\\\\\\\\\\\\\\\default=false/\" ~/.config/azahar-emu/qt-config.ini && sed -i \"s/use_gdbstub=false/use_gdbstub=true/\" ~/.config/azahar-emu/qt-config.ini"
+        ],
+        "dependsOn":"Make"
+      },
+      {
+        "label": "Azahar: Disable GDB",
+        "type": "shell",
+        "command": "bash",
+        "args": [
+          "-c",
+          "sed -i \"s/use_gdbstub\\\\\\\\\\\\\\\\default=false/use_gdbstub\\\\\\\\\\\\\\\\default=true/\" ~/.config/azahar-emu/qt-config.ini && sed -i \"s/use_gdbstub=true/use_gdbstub=false/\" ~/.config/azahar-emu/qt-config.ini"
+        ],
+        "dependsOn":"Make"
+      },
+  ]
+}

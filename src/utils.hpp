@@ -3,7 +3,13 @@
 #include "ZunMath.hpp"
 #include "ZunResult.hpp"
 #include "inttypes.hpp"
+static inline double u64_to_double(u64 value) { //libctru/os.c
+	return (((double)(u32)(value >> 32))*0x100000000ULL+(u32)value);
+}
 
+static inline double getDebugTimeMs(u64 start, u64 end) {
+    return u64_to_double(end - start) / CPU_TICKS_PER_MSEC;
+}
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define ARRAY_SIZE_SIGNED(x) ((i32)sizeof(x) / (i32)sizeof(x[0]))
 

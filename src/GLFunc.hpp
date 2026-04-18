@@ -1,6 +1,13 @@
 #pragma once
 
+#ifndef __3DS__
 #include <SDL2/SDL_opengl.h>
+#else
+#include <GL/picaGL.h>
+#include <3ds.h>
+#define GLAPIENTRY
+#define SDL_GL_SwapWindow(x) pglSwapBuffers()
+#endif
 
 // Function pointers for OpenGL functions used in EoSD. This is necessary because Windows
 //   opengl32 only goes up to OpenGL 1.1 and some of the blending parameters we need are
@@ -42,8 +49,8 @@ struct GLFuncTable
     void GLAPIENTRY (*glPopMatrix)(void);
     void GLAPIENTRY (*glPushMatrix)(void);
     void GLAPIENTRY (*glReadPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type,
-                                    GLvoid *pixels);
-    void GLAPIENTRY (*glShadeModel)(GLenum mode);
+                                    GLvoid *pixels); //screenshot (wait does the game really do that i didnt know)
+    void GLAPIENTRY (*glShadeModel)(GLenum mode); // sets flat shading dont care
     void GLAPIENTRY (*glTexCoordPointer)(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr);
     void GLAPIENTRY (*glTexEnvfv)(GLenum target, GLenum pname, const GLfloat *params);
     void GLAPIENTRY (*glTexEnvi)(GLenum target, GLenum pname, GLint param);
@@ -56,6 +63,7 @@ struct GLFuncTable
     void GLAPIENTRY (*glViewport)(GLint x, GLint y, GLsizei width, GLsizei height);
 
     // GL(ES) 2.X / WebGL
+    #ifndef __3DS__
     PFNGLATTACHSHADERPROC glAttachShader;
     PFNGLBINDATTRIBLOCATIONPROC glBindAttribLocation;
     PFNGLCOMPILESHADERPROC glCompileShader;
@@ -78,6 +86,7 @@ struct GLFuncTable
     PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
     PFNGLUSEPROGRAMPROC glUseProgram;
     PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
+    #endif
 
   private:
     // GLES forms for cases where they're different

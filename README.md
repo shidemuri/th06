@@ -23,15 +23,23 @@ EoSD-portable has the following dependencies:
 - `SDL2`
 - `SDL2_image`
 - `SDL2_ttf`
-- `libasound` (Optional and Linux-only, enables MIDI support. This will almost always be present as part of a desktop distro.)
-- `libiconv` (Windows-only)
+- ~`libasound` (Optional and Linux-only, enables MIDI support. This will almost always be present as part of a desktop distro.)~
+- `libiconv` ~(Windows-only)~
 
-In addition, building uses [`premake5`](https://premake.github.io/download) and a compiler that supports C++20.
+available on (dkp)-pacman:
+- `3ds-zlib`
+- `3ds-freetype` (to be able to build SDL2_ttf)
+- `3ds-libjpeg-turbo`
+
+In addition, building uses ~~[`premake5`](https://premake.github.io/download) and a compiler that supports C++20.~~ Make and the [`devkitPro`](https://devkitpro.org/wiki/Getting_Started) toolchain for the 3DS.
+
+
+devkitPro doesn't ship SDL2 on it's pacman repository but each dependency can be built from source using [`these instructions`](https://wiki.libsdl.org/SDL2/README-n3ds).
 
 #### Building
 
-In the repository root directory, run `premake5` with the desired build system as an argument (a list can be seen by running `premake5 --help`).
-This will output the build files to the `build` directory, and then compilation may be done with the desired build system.
+In the repository root directory, run `make` ~`premake5` with the desired build system as an argument (a list can be seen by running `premake5 --help`).
+This will output the build files to the `build` directory, and then compilation may be done with the desired build system.~
 
 ##### Build Options (Use with Premake Invocation)
 `--no-asoundlib`: On Linux, doesn't build MIDI support. Removes libasound as a dev and runtime dependency

@@ -1,11 +1,18 @@
 #include "GLFunc.hpp"
 
+#ifndef __3DS__
 #include <SDL2/SDL_video.h>
+#endif
 
 GLFuncTable g_glFuncTable;
 
+#ifndef __3DS__
 #define TRY_RESOLVE_FUNCTION(func) this->func = (decltype(this->func))SDL_GL_GetProcAddress(#func);
 #define TRY_RESOLVE_FUNCTION_GLES(func) this->func##_ptr = (decltype(this->func##_ptr))SDL_GL_GetProcAddress(#func);
+#else
+#define TRY_RESOLVE_FUNCTION(func) this->func = ::func;
+#define TRY_RESOLVE_FUNCTION_GLES(func) this->func##_ptr = ::func;
+#endif
 
 void GLFuncTable::ResolveFunctions(bool glesContext)
 {
@@ -51,15 +58,19 @@ void GLFuncTable::ResolveFunctions(bool glesContext)
     //   when we call it because the context doesn't actually match what's needed. So instead
     //   we need to pass a parameter to identify which function version to resolve and use.
 
+    #ifndef __3DS__
     if (glesContext)
     {
         TRY_RESOLVE_FUNCTION_GLES(glClearDepthf)
         TRY_RESOLVE_FUNCTION_GLES(glDepthRangef)
+        
     }
     else
     {
+    #endif
         TRY_RESOLVE_FUNCTION(glClearDepth)
         TRY_RESOLVE_FUNCTION(glDepthRange)
+    #ifndef __3DS__
     }
 
     TRY_RESOLVE_FUNCTION(glAttachShader)
@@ -84,30 +95,38 @@ void GLFuncTable::ResolveFunctions(bool glesContext)
     TRY_RESOLVE_FUNCTION(glUniformMatrix4fv)
     TRY_RESOLVE_FUNCTION(glUseProgram)
     TRY_RESOLVE_FUNCTION(glVertexAttribPointer)
-
+    #endif
     this->isGlesContext = glesContext;
 }
 
 void GLFuncTable::glClearDepthf(GLclampf depth)
 {
+    #ifndef __3DS__
     if (this->isGlesContext)
     {
         this->glClearDepthf_ptr(depth);
     }
     else
     {
+    #endif
         this->glClearDepth(depth);
+    #ifndef __3DS__
     }
+    #endif
 }
 
 void GLFuncTable::glDepthRangef(GLclampf near_val, GLclampf far_val)
 {
+    #ifndef __3DS__
     if (this->isGlesContext)
     {
         this->glDepthRangef_ptr(near_val, far_val);
     }
     else
     {
+    #endif
         this->glDepthRange(near_val, far_val);
+    #ifndef __3DS__
     }
+    #endif
 }

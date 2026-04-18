@@ -1,0 +1,117 @@
+{
+    "version": "0.2.0",
+    "inputs":[
+        {
+            "id": "ConsoleIP",
+            "type": "promptString",
+            "description": "Remote IP address of the console (can be seen on Rosalina menu if debug is enabled)",
+            "default": "192.168.0.152"
+        },
+        {
+            "id": "EmuIPAndPort",
+            "type": "promptString",
+            "description": "Remote IP address and port of the computer running Azahar (can be set up on Configure/General/Debug/GDB, gdbstub is automatically toggled when running Build&Debug/Build&Run)",
+            "default": "localhost:24689"
+        }
+    ],
+    "configurations": [
+        {
+            "name": "3dslink: Build & Run on Hardware",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/opt/devkitpro/tools/bin/3dslink",
+            "args": [
+                "-a",
+                "${input:ConsoleIP}",
+                "${workspaceFolderBasename}.3dsx"
+            ],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Make"
+        },
+        {
+            "name": "Azahar: Build & Run in Emu",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/usr/bin/azahar",
+            "args": [
+                "${workspaceFolderBasename}.3dsx"
+            ],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Azahar: Disable GDB",
+        },
+         {
+           "name": "Azahar: Build & Debug in Emu (GDB)",
+           "type": "cppdbg",
+           "request": "launch",
+
+           "program": "${workspaceFolder}/${workspaceFolderBasename}.elf",
+
+           "MIMode": "gdb",
+           "miDebuggerPath": "${env:DEVKITARM}/bin/arm-none-eabi-gdb",
+           "miDebuggerServerAddress": "${input:EmuIPAndPort}",
+
+           "cwd": "${workspaceFolder}",
+
+           "externalConsole": false,
+           "logging": {
+               "engineLogging": true
+           },
+           "preLaunchTask": "Launch Azahar with enabled GDB"
+       },
+    //   {
+    //       "name": "3dslink/Rosalina: Build & Debug in Hardware (GDB 3dsx)",
+    //       "type": "cppdbg",
+    //       "request": "launch",
+    //       "program": "${workspaceFolder}/${workspaceFolderBasename}.elf",
+
+    //       "stopAtConnect": true,
+    //       "MIMode": "gdb",
+    //       "miDebuggerPath": "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gdb",
+    //       "miDebuggerServerAddress": "${input:ConsoleIP}:4003",
+
+    //       "cwd": "${workspaceFolder}",
+    //       "logging": {
+    //           "engineLogging": true
+    //       },
+    //       "preLaunchTask": "3dslink launch"
+    //   },
+        {
+            "type": "cortex-debug",
+            "request": "attach",
+            "name": "3dslink/Rosalina: Build & Debug in Hardware (GDB 3dsx)",
+            "servertype": "external",
+            "gdbTarget": "${input:ConsoleIP}:4003",
+            "executable": "${workspaceFolder}/${workspaceFolderBasename}.elf",
+            "armToolchainPath": "/opt/devkitpro/devkitARM/bin",
+            "gdbPath": "arm-none-eabi-gdb",
+            "overrideAttachCommands": [
+                // "set architecture armv6k",
+                // "set remotetimeout 30",
+                "-gdb-set mi-async on",
+                "-target-select remote ${input:ConsoleIP}:4003"
+            ],
+            "overrideRestartCommands": [],
+            "preLaunchTask": "3dslink launch"
+        },
+        //ookay nvm azahar does not support cortex-debug
+      {
+          "name": "Rosalina: Build & Debug in Hardware (GDB CIA)",
+          "type": "cppdbg",
+          "request": "launch",
+
+          "program": "${workspaceFolder}/${workspaceFolderBasename}.elf",
+
+          "MIMode": "gdb",
+          "miDebuggerPath": "${env:DEVKITARM}/bin/arm-none-eabi-gdb",
+          "miDebuggerServerAddress": "${input:ConsoleIP}:4003",
+
+          "cwd": "${workspaceFolder}",
+
+          "externalConsole": false,
+
+          "logging": {
+              "engineLogging": true
+          },
+      },
+    ]
+}

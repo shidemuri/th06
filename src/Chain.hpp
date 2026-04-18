@@ -27,6 +27,8 @@ class ChainElem
     ChainCallback callback;
     ChainAddedCallback addedCallback;
     ChainDeletedCallback deletedCallback;
+    u64 startDebugTime;
+    u64 endDebugTime;
     ChainElem *prev;
     ChainElem *next;
     ChainElem *unkPtr;

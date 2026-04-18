@@ -201,4 +201,4 @@ struct AnmVm
     u8 fontWidth;
     u8 fontHeight;
     // Two final padding bytes
-};
+} /*__attribute__((packed))*/; //bleeeeh;

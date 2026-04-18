@@ -602,8 +602,10 @@ void Supervisor::ReleasePbg3(i32 pbg3FileIdx)
     // some accuracy improvements in the PBG3 handling will remove this
     // difference.
     this->pbg3Archives[pbg3FileIdx]->Release();
+    #ifndef __3DS__ //im not sure if this is going to have any adverse effects on real hardware but im too lazy to check that rn
     delete this->pbg3Archives[pbg3FileIdx];
     this->pbg3Archives[pbg3FileIdx] = NULL;
+    #endif
 }
 
 i32 Supervisor::LoadPbg3(i32 pbg3FileIdx, char *filename)
