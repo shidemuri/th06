@@ -6,6 +6,11 @@
 #include <cmath>
 #include <cstring>
 
+//wtf
+#include <math.h>
+extern "C" void sincosf(float angle, float *sinp, float *cosp);
+
+
 #if __cplusplus >= 202002L
 #include <bit>
 inline u32 BitCeil(u32 n)
@@ -408,8 +413,7 @@ struct ZunViewport
 
 inline void fsincos_wrapper(f32 *out_sine, f32 *out_cosine, f32 angle)
 {
-    *out_sine = std::sin(angle);
-    *out_cosine = std::cos(angle);
+    sincosf(angle, out_sine, out_cosine); //lord PLEASE dont break accuracy
 }
 
 inline void sincosmul(ZunVec3 *out_vel, f32 input, f32 multiplier)

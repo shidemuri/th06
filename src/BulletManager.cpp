@@ -1096,7 +1096,6 @@ ChainCallbackResult BulletManager::OnDraw(BulletManager *mgr)
     f32 cosine;
     Bullet *curBullet1;
     Bullet *curBullet2;
-
     g_AnmManager->SetDepthFunc(DEPTH_FUNC_ALWAYS);
 
     for (curLaser = &mgr->lasers[0], idx = 0; idx < ARRAY_SIZE_SIGNED(mgr->lasers); idx++, curLaser++)
@@ -1136,6 +1135,8 @@ ChainCallbackResult BulletManager::OnDraw(BulletManager *mgr)
 
     g_ItemManager.OnDraw();
 
+    //TODO: figure out the best way to draw bullets without lagging
+    #ifndef __3DS__
     if (g_Supervisor.hasD3dHardwareVertexProcessing)
     {
         for (curBullet1 = &mgr->bullets[0], idx = 0; idx < ARRAY_SIZE_SIGNED(mgr->bullets); idx++, curBullet1++)
@@ -1252,9 +1253,29 @@ ChainCallbackResult BulletManager::OnDraw(BulletManager *mgr)
             }
         }
     }
+    #else
+    u64 startDebug = svcGetSystemTick();
+    for (curBullet2 = &mgr->bullets[0], idx = 0; idx < ARRAY_SIZE_SIGNED(mgr->bullets); idx++, curBullet2++)
+    {
+        if (curBullet2->state == 0) continue;
+
+        u8 bulletHeight = curBullet2->sprites.bulletHeight;
+        i16 anmFileIndex = curBullet2->sprites.spriteBullet.anmFileIndex;
+
+        if (bulletHeight == 8 || bulletHeight > 16) {
+            BulletManager::DrawBullet(curBullet2);
+        } else if (
+            (bulletHeight == 16 && (anmFileIndex == ANM_SCRIPT_BULLET3_RING_BALL || anmFileIndex == ANM_SCRIPT_BULLET3_BALL))
+            || (bulletHeight == 16 && anmFileIndex != ANM_SCRIPT_BULLET3_RING_BALL && anmFileIndex != ANM_SCRIPT_BULLET3_BALL)
+        ) {
+            BulletManager::DrawBullet(curBullet2);
+        }
+    }
+    #endif
 
     g_AnmManager->SetDepthFunc(DEPTH_FUNC_LEQUAL);
-
+    u64 endDebug = svcGetSystemTick();
+    //printf("\x1b[19;1H\x1b[33mdraw09: %.4f ms\x1b[0m\n", getDebugTimeMs(startDebug, endDebug));
     return CHAIN_CALLBACK_RESULT_CONTINUE;
 }
 
@@ -1326,8 +1347,10 @@ void BulletManager::DrawBulletNoHwVertex(Bullet *bullet)
     {
         anmVm->rotation.z = (ZUN_PI / 2.0f) - bullet->angle;
     }
-
+    u64 startDebug = svcGetSystemTick();
     g_AnmManager->Draw(anmVm);
+    u64 endDebug = svcGetSystemTick();
+    printf("\x1b[23;1H\x1b[33mwahhh: %.4f ms\x1b[0m\n", getDebugTimeMs(startDebug, endDebug));
 }
 
 ZunResult BulletManager::AddedCallback(BulletManager *mgr)

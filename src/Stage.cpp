@@ -529,14 +529,14 @@ ZunResult Stage::RenderObjects(i32 zLevel)
     projectSrc.z = 0.0;
     //    D3DXMatrixIdentity(&worldMatrix);
     worldMatrix.Identity();
-    #ifdef __3DS__
+
     ZunMatrix vp = g_Supervisor.projectionMatrix * g_Supervisor.viewMatrix;
     i32 vLeft, vRight, vTop, vBottom;
     i32 lower = vTop = g_Supervisor.viewport.y; //yeah i fumbled the naming but i dont want to change that
     i32 upper = vBottom = lower + g_Supervisor.viewport.height;
     vLeft = g_Supervisor.viewport.x;
     vRight = vLeft + g_Supervisor.viewport.width;
-    #endif
+
     u64 startDebug = svcGetSystemTick();
     i32 quadsDrawnDebug = 0;
     while (instance->id >= 0)
@@ -667,6 +667,7 @@ ZunResult Stage::RenderObjects(i32 zLevel)
 
             f32 farZ = obj->position.z + instance->position.z - this->position.z;
             f32 nearZ = farZ + obj->size.z;
+            //yeah the naming is all wrong ill change it later
             f32 kube[8][3] = {
                 {leftX, botY, nearZ},
                 {leftX, topY, nearZ},
@@ -684,7 +685,6 @@ ZunResult Stage::RenderObjects(i32 zLevel)
                 f32 clipX = vp.m[0][0]*wx + vp.m[1][0]*wy + vp.m[2][0]*wz + vp.m[3][0];
                 f32 clipY = vp.m[0][1]*wx + vp.m[1][1]*wy + vp.m[2][1]*wz + vp.m[3][1];
                 f32 clipW = vp.m[0][2]*wx + vp.m[1][2]*wy + vp.m[2][2]*wz + vp.m[3][2];
-                if(clipW <= 0.f) continue; //behind the camera, skip
                 if(clipY >= -clipW && clipY <= clipW) goto render;
             }
             goto skip;

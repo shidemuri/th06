@@ -304,71 +304,43 @@ ZunResult EclManager::RunEcl(Enemy *enemy)
                                                      args->anmSetSlot.scriptIdx + ANM_SCRIPT_ENEMY_START);
                 break;
             case ECL_OPCODE_MOVEPOSITION:
-                #ifndef __3DS__
-                enemy->position = instruction->args.move.pos;
-                #else
                 memcpy(&enemy->position, &instruction->args.move.pos, sizeof(enemy->position));
-                #endif
                 enemy->position.x = *EnemyEclInstr::GetVarFloat(enemy, &enemy->position.x, NULL);
                 enemy->position.y = *EnemyEclInstr::GetVarFloat(enemy, &enemy->position.y, NULL);
                 enemy->position.z = *EnemyEclInstr::GetVarFloat(enemy, &enemy->position.z, NULL);
                 enemy->ClampPos();
                 break;
             case ECL_OPCODE_MOVEAXISVELOCITY:
-                #ifndef __3DS__
-                enemy->axisSpeed = instruction->args.move.pos;
-                #else
                 memcpy(&enemy->axisSpeed, &instruction->args.move.pos, sizeof(enemy->position));
-                #endif
                 enemy->axisSpeed.x = *EnemyEclInstr::GetVarFloat(enemy, &enemy->axisSpeed.x, NULL);
                 enemy->axisSpeed.y = *EnemyEclInstr::GetVarFloat(enemy, &enemy->axisSpeed.y, NULL);
                 enemy->axisSpeed.z = *EnemyEclInstr::GetVarFloat(enemy, &enemy->axisSpeed.z, NULL);
                 enemy->flags.unk1 = 0;
                 break;
             case ECL_OPCODE_MOVEVELOCITY:
-                #ifndef __3DS__
-                local_8 = instruction->args.move.pos;
-                #else
                 memcpy(&local_8, &instruction->args.move.pos, sizeof(local_8));
-                #endif
                 enemy->angle = *EnemyEclInstr::GetVarFloat(enemy, &local_8.x, NULL);
                 enemy->speed = *EnemyEclInstr::GetVarFloat(enemy, &local_8.y, NULL);
                 enemy->flags.unk1 = 1;
                 break;
             case ECL_OPCODE_MOVEANGULARVELOCITY:
-                #ifndef __3DS__
-                local_8 = instruction->args.move.pos;
-                #else
                 memcpy(&local_8, &instruction->args.move.pos, sizeof(local_8));
-                #endif
                 enemy->angularVelocity = *EnemyEclInstr::GetVarFloat(enemy, &local_8.x, NULL);
                 enemy->flags.unk1 = 1;
                 break;
             case ECL_OPCODE_MOVEATPLAYER:
-                #ifndef __3DS__
-                local_8 = instruction->args.move.pos;
-                #else
                 memcpy(&local_8, &instruction->args.move.pos, sizeof(local_8));
-                #endif
                 enemy->angle = g_Player.AngleToPlayer(&enemy->position) + local_8.x;
                 enemy->speed = *EnemyEclInstr::GetVarFloat(enemy, &local_8.y, NULL);
                 enemy->flags.unk1 = 1;
                 break;
             case ECL_OPCODE_MOVESPEED:
-                #ifndef __3DS__
-                local_8 = instruction->args.move.pos;
-                #else
                 memcpy(&local_8, &instruction->args.move.pos, sizeof(local_8));
-                #endif
                 enemy->speed = *EnemyEclInstr::GetVarFloat(enemy, &local_8.x, NULL);
                 enemy->flags.unk1 = 1;
                 break;
             case ECL_OPCODE_MOVEACCELERATION:
-                #ifndef __3DS__
-                local_8 = instruction->args.move.pos;
-                #else
                 memcpy(&local_8, &instruction->args.move.pos, sizeof(local_8));
-                #endif
                 enemy->acceleration = *EnemyEclInstr::GetVarFloat(enemy, &local_8.x, NULL);
                 enemy->flags.unk1 = 1;
                 break;

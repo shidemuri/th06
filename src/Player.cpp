@@ -603,20 +603,9 @@ ChainCallbackResult Player::OnDrawHighPrio(Player *p)
         {
             p->orbsSprite[0].pos = p->orbsPosition[0];
             p->orbsSprite[1].pos = p->orbsPosition[1];
-            #ifndef __3DS__
-            f32 *x1 = &p->orbsSprite[0].pos.x;
-            *x1 += g_GameManager.arcadeRegionTopLeftPos.x;
-            f32 *y1 = &p->orbsSprite[0].pos.y;
-            *y1 += g_GameManager.arcadeRegionTopLeftPos.y;
-            f32 *x2 = &p->orbsSprite[1].pos.x;
-            *x2 += g_GameManager.arcadeRegionTopLeftPos.x;
-            f32 *y2 = &p->orbsSprite[1].pos.y;
-            *y2 += g_GameManager.arcadeRegionTopLeftPos.y;
-            #else 
 
             //aughhhhh why does gcc forget that it is packed and that it shouldnt use vldr booooo
             //this is terrible but it works sorry
-
             f32 x1, y1, x2, y2;
             x1 = p->orbsSprite[0].pos.x + g_GameManager.arcadeRegionTopLeftPos.x;
             y1 = p->orbsSprite[0].pos.y + g_GameManager.arcadeRegionTopLeftPos.y;
@@ -626,7 +615,7 @@ ChainCallbackResult Player::OnDrawHighPrio(Player *p)
             memcpy(&p->orbsSprite[0].pos.y, &y1, sizeof(f32));
             memcpy(&p->orbsSprite[1].pos.x, &x2, sizeof(f32));
             memcpy(&p->orbsSprite[1].pos.y, &y2, sizeof(f32));
-            #endif
+
             p->orbsSprite[0].pos.z = 0.491;
             p->orbsSprite[1].pos.z = 0.491;
             g_AnmManager->Draw(&p->orbsSprite[0]);

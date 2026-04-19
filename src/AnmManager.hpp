@@ -29,10 +29,8 @@ struct TextureData
 
     // Fields needed to compensate for inability to read back texture for alpha loading
     u8 *textureData;
-    #ifdef __3DS__
     u32 surfW;
     u32 surfH;
-    #endif
     u32 width;
     u32 height;
     i32 format;
@@ -412,12 +410,7 @@ struct AnmManager
 
     static SDL_Surface *LoadToSurfaceWithFormat(const char *filename, SDL_PixelFormatEnum format, u8 **fileData);
     static u8 *ExtractSurfacePixels(SDL_Surface *src, u8 pixelDepth);
-    static void FlipSurface(SDL_Surface *surface);
-    #ifndef __3DS__
-    void ApplySurfaceToColorBuffer(SDL_Surface *src, const SDL_Rect &srcRect, const SDL_Rect &dstRect);
-    #else
     void ApplySurfaceToColorBuffer(i32 src, const SDL_Rect &srcRect, const SDL_Rect &dstRect);
-    #endif
     // Creates, binds, and set parameters for a new texture
     void CreateTextureObject();
     void UpdateDirtyStates();
@@ -433,9 +426,7 @@ struct AnmManager
     AnmRawEntry *anmFiles[128];
     u32 anmFilesSpriteIndexOffsets[128];
     SDL_Surface *surfaces[32];
-    #ifdef __3DS__
-    GLuint surfacesCache[32];
-    #endif
+    GLuint surfacesCache[32]; //cache of texture handles for surfaces, refer to ApplySurfaceToBackbuffer
     //    SDL_Surface *surfacesBis[32];
     //    D3DXIMAGE_INFO surfaceSourceInfo[32];
     GLuint currentTextureHandle;

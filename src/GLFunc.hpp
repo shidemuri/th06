@@ -1,13 +1,9 @@
 #pragma once
 
-#ifndef __3DS__
-#include <SDL2/SDL_opengl.h>
-#else
 #include <GL/picaGL.h>
 #include <3ds.h>
 #define GLAPIENTRY
 #define SDL_GL_SwapWindow(x) pglSwapBuffers()
-#endif
 
 // Function pointers for OpenGL functions used in EoSD. This is necessary because Windows
 //   opengl32 only goes up to OpenGL 1.1 and some of the blending parameters we need are

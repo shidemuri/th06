@@ -125,11 +125,8 @@ enum EclValueType
     ECL_VALUE_TYPE_UNDEFINED,
 };
 
-#ifdef __3DS__
+
 struct __attribute__((aligned(4))) Enemy //doesnt do nothing?
-#else
-struct Enemy
-#endif
 {
     Enemy()
     {

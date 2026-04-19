@@ -231,10 +231,6 @@ i32 *GetVar(Enemy *enemy, EclVarId *eclVarId, EclValueType *valueType)
 
 f32 *GetVarFloat(Enemy *enemy, f32 *eclVarId, EclValueType *valueType)
 {
-    #ifndef __3DS__
-    i32 varId = *eclVarId;
-    #else
-    i32 varId;
     //if you see a bunch of memcpy calls around the codebase like this its because the compiler is assuming its aligned memory and uses vldr which causes kaboom
     /*
     234         i32 varId = *eclVarId;
@@ -243,8 +239,10 @@ f32 *GetVarFloat(Enemy *enemy, f32 *eclVarId, EclValueType *valueType)
         0x00125190 <+32>:    vcvt.s32.f32    s15, s15
         0x00125194 <+36>:    vstr    s15, [r11, #-12]
     */
-    memcpy(&varId, eclVarId, sizeof(i32));
-    #endif
+    f32 temp;
+    memcpy(&temp, eclVarId, sizeof(f32));
+    i32 varId = temp;
+
     i32 *res = GetVar(enemy, (EclVarId *)&varId, valueType);
     if (res == &varId)
     {

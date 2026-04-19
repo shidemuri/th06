@@ -49,6 +49,13 @@ SoundPlayer::SoundPlayer()
     std::memset(this, 0, sizeof(SoundPlayer));
 }
 
+static void AudioCallback(void *userdata, Uint8 *stream, int len)
+{
+    SoundPlayer *soundPlayer = (SoundPlayer *)userdata;
+    std::memset(stream, 0, len);
+    soundPlayer->MixAudio(len / 2, (i16*)stream);
+}
+
 ZunResult SoundPlayer::InitializeDSound()
 {
     SDL_AudioSpec desiredAudio;
@@ -64,7 +71,13 @@ ZunResult SoundPlayer::InitializeDSound()
     desiredAudio.channels = 2;
     desiredAudio.samples = 2048;
     desiredAudio.padding = 0;
-    desiredAudio.callback = NULL;
+
+    //The background thread was highly inefficient and the way that MixAudio worked
+    //was hogging a bunch of CPU time as well because it read individual samples from the SD card
+    //so now we just hand off everything to SDL so it can receive the actual amount of samples it needs
+
+    desiredAudio.callback = AudioCallback;
+    desiredAudio.userdata = this;
 
     this->audioDev = SDL_OpenAudioDevice(NULL, 0, &desiredAudio, &obtainedAudio, 0);
 
@@ -72,8 +85,7 @@ ZunResult SoundPlayer::InitializeDSound()
     {
         goto fail;
     }
-
-    this->backgroundMusicThreadHandle = std::thread(&SoundPlayer::BackgroundMusicPlayerThread, this);
+    SDL_PauseAudioDevice(this->audioDev, 0);
 
     GameErrorContext::Log(&g_GameErrorContext, TH_DBG_SOUNDPLAYER_INIT_SUCCESS);
     return ZUN_SUCCESS;
@@ -85,10 +97,6 @@ fail:
 
 ZunResult SoundPlayer::Release(void)
 {
-    this->terminateFlag = true;
-    this->backgroundMusicThreadHandle.join();
-    this->terminateFlag = false;
-
     StopBGM();
 
     for (int i = 0; i < ARRAY_SIZE_SIGNED(this->soundBuffers); i++)
@@ -492,14 +500,18 @@ void SoundPlayer::PlaySoundByIdx(SoundIdx idx)
     this->soundBuffersToPlay[i] = idx;
 }
 
-void SoundPlayer::MixAudio(u32 samples)
+i16* SoundPlayer::MixAudio(u32 samples, i16* outBuffer)
 {
     std::vector<i16> finalBuffer(samples);
     std::vector<i32> mixBuffer(samples);
     u8 playingChannels = 0;
 
-    soundBufMutex.lock();
-
+    //cheap hack to avoid dealing with headaches
+    if(!soundBufMutex.try_lock())
+    {
+        std::memset(finalBuffer.data(), 0, samples * 2);
+        return finalBuffer.data();
+    }
     for (int i = 0; i < ARRAY_SIZE_SIGNED(soundBuffers); i++)
     {
         if (!soundBuffers[i].isPlaying)
@@ -546,11 +558,16 @@ void SoundPlayer::MixAudio(u32 samples)
             const u32 samplesToMix =
                 std::min((samples / 2) - samplesMixed, backgroundMusic.loopEnd - backgroundMusic.pos);
 
+            
+            //the previous implementation read samples from the SD card one at a time which on desktop builds isn't an issue
+            //because whatever the OS does idk whatever but on the 3DS its very slow
+            //so now we just read everything from the SD card at once
+            i16 sampleBuf[samplesToMix * 2];
+            SDL_RWread(backgroundMusic.srcWav.fileStream, sampleBuf, samplesToMix * sizeof(i16) * 2, 1);
             for (u32 j = 0; j < samplesToMix; j++)
             {
-                mixBuffer[samplesMixed + j * 2] += ((i16)SDL_ReadLE16(backgroundMusic.srcWav.fileStream)) * fadeoutMult;
-                mixBuffer[samplesMixed + j * 2 + 1] +=
-                    ((i16)SDL_ReadLE16(backgroundMusic.srcWav.fileStream)) * fadeoutMult;
+                mixBuffer[samplesMixed + j * 2] += sampleBuf[j * 2] * fadeoutMult;
+                mixBuffer[samplesMixed + j * 2 + 1] += sampleBuf[j * 2 + 1] * fadeoutMult;
             }
 
             backgroundMusic.pos += samplesToMix;
@@ -607,52 +624,6 @@ void SoundPlayer::MixAudio(u32 samples)
         finalBuffer[i] = mixBuffer[i] / mixDivisor;
     }
 
-    SDL_QueueAudio(audioDev, finalBuffer.data(), samples * 2);
-}
-
-// EoSD originally just used this function to manage the streaming of the music WAV file.
-//   We also use it to mix and queue audio, since we have to do that manually and doing it
-//   in a thread keeps sound running continuously, even if the main thread runs into lag
-void SoundPlayer::BackgroundMusicPlayerThread()
-{
-    SDL_PauseAudioDevice(this->audioDev, 0);
-
-    u32 latencyLimit = 2940; //~~1 frame just to test if that wont stress the cpu too much //14'700; // ~5 frames
-    u64 samplesSent = 0;
-    u64 startTick = SDL_GetTicks64();
-
-    while (1)
-    {
-        u64 curTicks = SDL_GetTicks64();
-
-        // Keep slightly more than 1 frame's worth of samples in the audio buffer at all times
-        i32 targetSamples = (curTicks - startTick) * 44.100 - samplesSent + 1024;
-
-        // Quick and dirty checks to keep audio latency low
-        //   Can probably be horribly broken, but I don't have weaker hardware to test on
-        if (SDL_GetQueuedAudioSize(this->audioDev) > latencyLimit)
-        {
-            latencyLimit += 2'940; // 1 frame
-            samplesSent += targetSamples;
-            targetSamples = 0;
-        }
-        else if (targetSamples > 1024)
-        {
-            samplesSent += targetSamples - 1024;
-            targetSamples = 1024;
-        }
-
-        if (targetSamples > 0)
-        {
-            this->MixAudio(targetSamples * 2);
-            samplesSent += targetSamples;
-        }
-
-        if (this->terminateFlag)
-        {
-            return;
-        }
-
-        SDL_Delay(5);
-    }
+    std::copy(finalBuffer.begin(), finalBuffer.end(), outBuffer);
+    return outBuffer;
 }

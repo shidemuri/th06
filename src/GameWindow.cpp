@@ -189,11 +189,7 @@ void GameWindow::CreateGameWindow()
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER);
 
-    #ifndef __3DS__
-    u32 flags = SDL_WINDOW_OPENGL;
-    #else
     u32 flags = SDL_WINDOW_FULLSCREEN;
-    #endif 
     i32 height = GAME_WINDOW_HEIGHT_REAL;
     i32 width = GAME_WINDOW_WIDTH_REAL;
     i32 x = SDL_WINDOWPOS_UNDEFINED;
@@ -218,22 +214,8 @@ void GameWindow::CreateGameWindow()
             goto fail;
         }
 
-        #ifndef __3DS__
-        g_GameWindow.glContext = SDL_GL_CreateContext(g_GameWindow.window);
-
-        if (g_GameWindow.glContext == NULL)
-        {
-            goto fail;
-        }
-
-        if (SDL_GL_MakeCurrent(g_GameWindow.window, g_GameWindow.glContext) != 0)
-        {
-            goto fail;
-        }
-        #else
         pglInit();
         pglSelectScreen(GFX_TOP,GFX_LEFT);
-        #endif
 
         utils::DebugPrint2("Using renderer backend %s", s_RenderBackends[i].name);
         g_glFuncTable.ResolveFunctions(s_RenderBackends[i].isEsContext);

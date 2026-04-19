@@ -7,6 +7,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 enum SoundIdx
 {
@@ -94,14 +95,11 @@ struct SoundPlayer
     ZunResult LoadWav(char *path);
     ZunResult LoadPos(char *path);
 
-    void BackgroundMusicPlayerThread();
-    void MixAudio(u32 samples);
-
+    i16* MixAudio(u32 samples, i16* outBuffer);
     SoundData soundBuffers[128];
     std::mutex soundBufMutex;
     SDL_AudioDeviceID audioDev;
     std::thread backgroundMusicThreadHandle;
-    std::atomic_bool terminateFlag;
     i32 soundBuffersToPlay[3];
     MusicStream backgroundMusic;
     bool isLooping;

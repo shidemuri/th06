@@ -11,8 +11,6 @@
         "/opt/devkitpro/portlibs/3ds/include/*",
         "/opt/devkitpro/picaGL/include/*"
       ],
-      "cStandard": "${default}",
-      "cppStandard": "${default}",
       "defines": [
         "__3DS__",
         "NDEBUG"
