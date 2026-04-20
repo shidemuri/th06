@@ -219,10 +219,14 @@ else
 # main targets
 #---------------------------------------------------------------------------------
 #-rsftitleid=$(TITLEID) 
+
+HAS_MAKEROM := $(shell command -v makerom 2>/dev/null)
+
 all: $(OUTPUT).3dsx $(OUTPUT).cia
 
 $(OUTPUT).3dsx	:	$(OUTPUT).elf $(_3DSXDEPS)
 $(OUTPUT).cia   :   $(OUTPUT).elf
+ifdef HAS_MAKEROM
 	@echo "building cia..."
 	@makerom -f cia \
 		-o $@ \
@@ -231,6 +235,9 @@ $(OUTPUT).cia   :   $(OUTPUT).elf
 		-rsf $(TOPDIR)/th06.rsf \
 		-icon $(TOPDIR)/icon.png \
 		-banner $(TOPDIR)/banner.png
+else
+	@echo "skipping cia build as makerom is not installed"
+endif
 # makerom -f cia -o $(OUTPUT).cia -elf $(TARGET).elf -target t -exefslogo -icon icon.png -banner banner.bin
 
 
