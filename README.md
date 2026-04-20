@@ -4,12 +4,19 @@ This is a Nintendo 3DS port of 東方紅魔郷　～ the Embodiment of Scarlet D
 
 The original codebase was taken from [EoSD-portable](https://github.com/GensokyoClub/th06/tree/portable).
 
+## TODO:
+- shamelessly steal the batch rendering code from th08 decomp (because the game currently doesnt do that and it runs like garbage on real hardware)
+- find whichever unaligned accesses still remain
+- fix .cia build proecss
+- better pre-launch check process
+- a decent banner
+
 ### Usage
 
 > [!IMPORTANT]
 > File names for .DAT files will vary depending on the `TH_LANG` string in `i18n.hpp`.
 >
->`TH_LANG` is currently `TH_JP` 
+> `TH_LANG` is currently `TH_JP` 
 > 
 > If it is `TH_EN` then they should be named `KOUMAKYO_<name>.DAT`
 >
