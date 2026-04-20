@@ -31,6 +31,7 @@ Place the following game assets as taken from an original copy of the game (ver 
 - `MD.DAT`
 - `ST.DAT`
 - `TL.DAT`
+- `msgothic.ttc` OR `NotoSansJP-Regular.ttf` (fonts)
 
 # Dependencies
 This project has the following dependencies:
@@ -46,9 +47,10 @@ This project has the following dependencies:
 - `SDL2`
 - `SDL2_image`
 - `SDL2_ttf`
+- `makerom` (optional, but required if you want to build .cia)
 
 
-#### devkitPro doesn't ship SDL2 packages on it's pacman repository. To build them, do the following:
+#### devkitPro doesn't ship SDL2 packages (and makerom neither) on it's pacman repository. To build them, do the following:
 1. Install the other dependencies
 2. Clone the repositories
   
@@ -59,6 +61,10 @@ mkdir build</code>
 3. and then [build and install as instructed here](https://wiki.libsdl.org/SDL2/README-n3ds#building)
 > [!IMPORTANT]
 > For `SDL2_image` and `SDL2_ttf`, add `-DSDL2IMAGE_SAMPLES=OFF` and `-DSDLTTF_SAMPLES=OFF` (respectively) to the first `cmake` command. This is to prevent CMake from building the SDL2 samples, which would require extra libraries that are unnecessary here.
+
+#### makerom
+
+To build `makerom`, follow [this](https://github.com/3DSGuy/Project_CTR/blob/master/makerom/BUILDING.md) and then put the executable somewhere that `make` can read, like `$PATH`, `$DEVKITPRO/tools/bin` or even the repository root.
 
 # Building
 
