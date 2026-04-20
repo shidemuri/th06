@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
 	printf("\x1b[3;1HTouhou Project - (c) Team Shanghai Alice");
 	printf("\x1b[5;1HPre-launch filesystem check...");
     gfxSwapBuffers();
+    gspWaitForVBlank();
     aptInit();
 
     chdir("/");
@@ -55,6 +56,7 @@ int main(int argc, char *argv[])
     for (const char* file : files) {
         printf("\x1b[6;1Hstat sdmc:/3ds/eosd3ds/%s ...", file);
         gfxSwapBuffers();
+        gspWaitForVBlank();
         if (access(file, F_OK) < 0) {
             printf("\x1b[6;1HError: sdmc:/3ds/eosd3ds/%s not found. Refer to the README for more information.\n", file);
             printf("Press START to exit.");
@@ -73,6 +75,7 @@ int main(int argc, char *argv[])
         sprintf(file, "bgm/th06_%02d.wav", i);
         printf("\x1b[6;1Hstat sdmc:/3ds/eosd3ds/bgm/th06_%02d.wav ...", i);
         gfxSwapBuffers();
+        gspWaitForVBlank();
         if (access(file, F_OK) < 0) {
             printf("\x1b[6;1HError: sdmc:/3ds/eosd3ds/bgm/th06_%02d.wav not found. Refer to the README for more information.\n", i);
             printf("Press START to exit.");
@@ -88,6 +91,8 @@ int main(int argc, char *argv[])
     }
 
     printf("\x1b[8;1H;Started execution.\n");
+
+    gspWaitForVBlank();
 
     //    MSG msg;
     //    i32 waste1, waste2, waste3, waste4, waste5, waste6;

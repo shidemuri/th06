@@ -604,8 +604,6 @@ ChainCallbackResult Player::OnDrawHighPrio(Player *p)
             p->orbsSprite[0].pos = p->orbsPosition[0];
             p->orbsSprite[1].pos = p->orbsPosition[1];
 
-            //aughhhhh why does gcc forget that it is packed and that it shouldnt use vldr booooo
-            //this is terrible but it works sorry
             f32 x1, y1, x2, y2;
             x1 = p->orbsSprite[0].pos.x + g_GameManager.arcadeRegionTopLeftPos.x;
             y1 = p->orbsSprite[0].pos.y + g_GameManager.arcadeRegionTopLeftPos.y;

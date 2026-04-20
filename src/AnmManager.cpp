@@ -453,10 +453,10 @@ ZunResult AnmManager::LoadTextureAlphaChannel(i32 textureIdx, char *textureName,
     {
     case TEX_FMT_A8R8G8B8:
         dstData8 = dstData;
-        for (y = 0; y < textureDesc->surfH; y++)
+        for (y = 0; y < textureDesc->height; y++)
         {
             srcData8 = srcData + alphaSurface->pitch * y;
-            for (x = 0; x < textureDesc->surfW; x++, srcData8 += 4, dstData8 += 4)
+            for (x = 0; x < textureDesc->width; x++, srcData8 += 4, dstData8 += 4)
             {
                 dstData8[3] = srcData8[0];
             }
@@ -467,10 +467,10 @@ ZunResult AnmManager::LoadTextureAlphaChannel(i32 textureIdx, char *textureName,
 
     case TEX_FMT_A1R5G5B5:
         dstData16 = (u16 *)dstData;
-        for (y = 0; y < textureDesc->surfH; y++)
+        for (y = 0; y < textureDesc->height; y++)
         {
             srcData16 = (u16 *)(srcData + alphaSurface->pitch * y);
-            for (x = 0; x < textureDesc->surfW; x++, srcData16++, dstData16++)
+            for (x = 0; x < textureDesc->width; x++, srcData16++, dstData16++)
             {
                 *dstData16 &= 0xfffe;
                 *dstData16 |= (*srcData16 & 0x8000) >> 15;
@@ -480,10 +480,10 @@ ZunResult AnmManager::LoadTextureAlphaChannel(i32 textureIdx, char *textureName,
 
     case TEX_FMT_A4R4G4B4:
         dstData16 = (u16 *)dstData;
-        for (y = 0; y < textureDesc->surfH; y++)
+        for (y = 0; y < textureDesc->height; y++)
         {
             srcData16 = (u16 *)(srcData + alphaSurface->pitch * y);
-            for (x = 0; x < textureDesc->surfW; x++, srcData16++, dstData16++)
+            for (x = 0; x < textureDesc->width; x++, srcData16++, dstData16++)
             {
                 *dstData16 &= 0xfff0;
                 *dstData16 |= (*srcData16 & 0xf000) >> 12;
@@ -1798,7 +1798,7 @@ ZunResult AnmManager::LoadSurface(i32 surfaceIdx, const char *path)
     }
 
     //refer to ApplySurfaceToBackbuffer
-    GLuint previousHandle = this->currentTextureHandle;
+    //GLuint previousHandle = this->currentTextureHandle;
     CreateTextureObject();
     this->surfacesCache[surfaceIdx] = this->currentTextureHandle;
     SDL_Surface *surf = this->surfaces[surfaceIdx];
@@ -1808,9 +1808,9 @@ ZunResult AnmManager::LoadSurface(i32 surfaceIdx, const char *path)
     u8 *pixels = ExtractSurfacePixels(surf, 3);
     g_glFuncTable.glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, surf->w, surf->h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
     linearFree(pixels);
-    this->currentTextureHandle = previousHandle;
-    if (previousHandle != 0)
-        g_glFuncTable.glBindTexture(GL_TEXTURE_2D, previousHandle);
+    //this->currentTextureHandle = previousHandle;
+    //if (previousHandle != 0)
+    //    g_glFuncTable.glBindTexture(GL_TEXTURE_2D, previousHandle);
 
     return ZUN_SUCCESS;
 

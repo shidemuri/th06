@@ -195,22 +195,30 @@ void BombData::BombReimuADraw(Player *player)
             continue;
         }
 
-        bombSprite->pos = player->bombInfo.bombRegionPositions[idx] + bombSprite->posOffset;
+        bombSprite->pos.x = uf32(&player->bombInfo.bombRegionPositions[idx].x) + uf32(&bombSprite->posOffset.x);
+        bombSprite->pos.y = uf32(&player->bombInfo.bombRegionPositions[idx].y) + uf32(&bombSprite->posOffset.y);
+        bombSprite->pos.z = uf32(&player->bombInfo.bombRegionPositions[idx].z) + uf32(&bombSprite->posOffset.z);
         player->SetToTopLeftPos(bombSprite);
         g_AnmManager->DrawNoRotation(bombSprite);
         bombSprite++;
 
-        bombSprite->pos = player->bombInfo.bombRegionPositions[idx] + bombSprite->posOffset;
+        bombSprite->pos.x = uf32(&player->bombInfo.bombRegionPositions[idx].x) + uf32(&bombSprite->posOffset.x);
+        bombSprite->pos.y = uf32(&player->bombInfo.bombRegionPositions[idx].y) + uf32(&bombSprite->posOffset.y);
+        bombSprite->pos.z = uf32(&player->bombInfo.bombRegionPositions[idx].z) + uf32(&bombSprite->posOffset.z);
         player->SetToTopLeftPos(bombSprite);
         g_AnmManager->DrawNoRotation(bombSprite);
         bombSprite++;
 
-        bombSprite->pos = player->bombInfo.bombRegionPositions[idx] + bombSprite->posOffset;
+        bombSprite->pos.x = uf32(&player->bombInfo.bombRegionPositions[idx].x) + uf32(&bombSprite->posOffset.x);
+        bombSprite->pos.y = uf32(&player->bombInfo.bombRegionPositions[idx].y) + uf32(&bombSprite->posOffset.y);
+        bombSprite->pos.z = uf32(&player->bombInfo.bombRegionPositions[idx].z) + uf32(&bombSprite->posOffset.z);
         player->SetToTopLeftPos(bombSprite);
         g_AnmManager->DrawNoRotation(bombSprite);
         bombSprite++;
 
-        bombSprite->pos = player->bombInfo.bombRegionPositions[idx] + bombSprite->posOffset;
+        bombSprite->pos.x = uf32(&player->bombInfo.bombRegionPositions[idx].x) + uf32(&bombSprite->posOffset.x);
+        bombSprite->pos.y = uf32(&player->bombInfo.bombRegionPositions[idx].y) + uf32(&bombSprite->posOffset.y);
+        bombSprite->pos.z = uf32(&player->bombInfo.bombRegionPositions[idx].z) + uf32(&bombSprite->posOffset.z);
         player->SetToTopLeftPos(bombSprite);
         g_AnmManager->DrawNoRotation(bombSprite);
         bombSprite++;

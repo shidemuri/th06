@@ -12,3 +12,13 @@ typedef std::uint64_t u64;
 typedef std::intptr_t iptr;
 typedef float f32;
 typedef double f64;
+#include <string.h>
+
+#ifdef __3DS__
+inline float uf32(const void* ptr) {
+    u32 temp;
+    memcpy(&temp, ptr, sizeof(u32));
+    //__asm__ volatile ("":"+r"(temp)); //please work?
+    return __builtin_bit_cast(float, temp);
+}
+#endif

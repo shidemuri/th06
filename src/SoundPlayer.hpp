@@ -100,6 +100,10 @@ struct SoundPlayer
     std::mutex soundBufMutex;
     SDL_AudioDeviceID audioDev;
     std::thread backgroundMusicThreadHandle;
+    void BackgroundMusicPlayerThread();
+    void MixAudio(u32 samples);
+
+    std::atomic_bool terminateFlag;
     i32 soundBuffersToPlay[3];
     MusicStream backgroundMusic;
     bool isLooping;

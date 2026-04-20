@@ -38,7 +38,7 @@ void MoveDirTime(Enemy *enemy, EclRawInstr *instr)
     f32 angle;
 
     alu = &instr->args.alu;
-    angle = *GetVarFloat(enemy, &alu->arg1.f32Param, NULL);
+    angle = uf32(GetVarFloat(enemy, &alu->arg1.f32Param, NULL));
 
     enemy->moveInterp.x = ZUN_COSF(angle) * alu->arg2.f32Param * alu->res / 2.0f;
     enemy->moveInterp.y = ZUN_SINF(angle) * alu->arg2.f32Param * alu->res / 2.0f;
@@ -57,9 +57,13 @@ void MovePosTime(Enemy *enemy, EclRawInstr *instr)
     ZunVec3 newPos;
     EclRawInstrAluArgs *alu = &instr->args.alu;
 
-    newPos.x = *GetVarFloat(enemy, &alu->arg1.f32Param, NULL);
-    newPos.y = *GetVarFloat(enemy, &alu->arg2.f32Param, NULL);
-    newPos.z = *GetVarFloat(enemy, &alu->arg3.f32Param, NULL);
+    newPos.x = uf32(GetVarFloat(enemy, &alu->arg1.f32Param, NULL));
+    newPos.y = uf32(GetVarFloat(enemy, &alu->arg2.f32Param, NULL));
+    newPos.z = uf32(GetVarFloat(enemy, &alu->arg3.f32Param, NULL));
+
+    //memcpy(&newPos.x, GetVarFloat(enemy, &alu->arg1.f32Param, NULL), sizeof(f32));
+    //memcpy(&newPos.y, GetVarFloat(enemy, &alu->arg2.f32Param, NULL), sizeof(f32));
+    //memcpy(&newPos.z, GetVarFloat(enemy, &alu->arg3.f32Param, NULL), sizeof(f32));
 
     enemy->moveInterp = newPos - enemy->position;
     enemy->moveInterpStartPos = enemy->position;
@@ -77,7 +81,7 @@ void MoveTime(Enemy *enemy, EclRawInstr *instr)
     f32 angle;
 
     alu = &instr->args.alu;
-    angle = *GetVarFloat(enemy, &enemy->angle, NULL);
+    angle = uf32(GetVarFloat(enemy, &enemy->angle, NULL));
 
     enemy->moveInterp.x = ZUN_COSF(angle) * enemy->speed * alu->res / 2.0f;
     enemy->moveInterp.y = ZUN_SINF(angle) * enemy->speed * alu->res / 2.0f;
@@ -231,17 +235,9 @@ i32 *GetVar(Enemy *enemy, EclVarId *eclVarId, EclValueType *valueType)
 
 f32 *GetVarFloat(Enemy *enemy, f32 *eclVarId, EclValueType *valueType)
 {
-    //if you see a bunch of memcpy calls around the codebase like this its because the compiler is assuming its aligned memory and uses vldr which causes kaboom
-    /*
-    234         i32 varId = *eclVarId;
-        0x00125188 <+24>:    ldr     r3, [r11, #-20] @ 0xffffffec
-        0x0012518c <+28>:    vldr    s15, [r3]   <<<<<<<<<<------------- like this
-        0x00125190 <+32>:    vcvt.s32.f32    s15, s15
-        0x00125194 <+36>:    vstr    s15, [r11, #-12]
-    */
-    f32 temp;
-    memcpy(&temp, eclVarId, sizeof(f32));
-    i32 varId = temp;
+    //f32 temp;
+    //memcpy(&temp, eclVarId, sizeof(f32));
+    i32 varId = uf32(eclVarId);
 
     i32 *res = GetVar(enemy, (EclVarId *)&varId, valueType);
     if (res == &varId)
@@ -292,7 +288,15 @@ void MathAdd(Enemy *enemy, EclVarId outVarId, EclVarId *lhsVarId, EclVarId *rhsV
     {
         lhsPtr = (i32 *)GetVarFloat(enemy, (f32 *)lhsVarId, NULL);
         rhsPtr = (i32 *)GetVarFloat(enemy, (f32 *)rhsVarId, NULL);
-        *(f32 *)outPtr = *(f32 *)lhsPtr + *(f32 *)rhsPtr;
+
+        //son
+        //*(f32 *)outPtr = *(f32 *)lhsPtr + *(f32 *)rhsPtr;
+
+        f32 lhs, rhs, res;
+        memcpy(&lhs, lhsPtr, sizeof(f32));
+        memcpy(&rhs, rhsPtr, sizeof(f32));
+        res = lhs + rhs;
+        memcpy(outPtr, &res, sizeof(f32));
     }
     return;
 }
@@ -315,7 +319,14 @@ void MathSub(Enemy *enemy, EclVarId outVarId, EclVarId *lhsVarId, EclVarId *rhsV
     {
         lhsPtr = (i32 *)GetVarFloat(enemy, (f32 *)lhsVarId, NULL);
         rhsPtr = (i32 *)GetVarFloat(enemy, (f32 *)rhsVarId, NULL);
-        *(f32 *)outPtr = *(f32 *)lhsPtr - *(f32 *)rhsPtr;
+        
+        //son :sob:
+        //*(f32 *)outPtr = *(f32 *)lhsPtr - *(f32 *)rhsPtr;
+        f32 lhs, rhs, res;
+        memcpy(&lhs, lhsPtr, sizeof(f32));
+        memcpy(&rhs, rhsPtr, sizeof(f32));
+        res = lhs - rhs;
+        memcpy(outPtr, &res, sizeof(f32));
     }
     return;
 }
@@ -340,7 +351,15 @@ void MathMul(Enemy *enemy, EclVarId outVarId, EclVarId *lhsVarId, EclVarId *rhsV
     {
         lhsPtr = (i32 *)GetVarFloat(enemy, (f32 *)lhsVarId, NULL);
         rhsPtr = (i32 *)GetVarFloat(enemy, (f32 *)rhsVarId, NULL);
-        *(f32 *)outPtr = *(f32 *)lhsPtr * *(f32 *)rhsPtr;
+
+        //fahhhhhh
+        //*(f32 *)outPtr = *(f32 *)lhsPtr * *(f32 *)rhsPtr;
+
+        f32 lhs, rhs, res;
+        memcpy(&lhs, lhsPtr, sizeof(f32));
+        memcpy(&rhs, rhsPtr, sizeof(f32));
+        res = lhs * rhs;
+        memcpy(outPtr, &res, sizeof(f32));
     }
     return;
 }
@@ -364,6 +383,12 @@ void MathDiv(Enemy *enemy, EclVarId outVarId, EclVarId *lhsVarId, EclVarId *rhsV
         lhsPtr = (i32 *)GetVarFloat(enemy, (f32 *)lhsVarId, NULL);
         rhsPtr = (i32 *)GetVarFloat(enemy, (f32 *)rhsVarId, NULL);
         *(f32 *)outPtr = *(f32 *)lhsPtr / *(f32 *)rhsPtr;
+
+        f32 lhs, rhs, res;
+        memcpy(&lhs, lhsPtr, sizeof(f32));
+        memcpy(&rhs, rhsPtr, sizeof(f32));
+        res = lhs / rhs;
+        memcpy(outPtr, &res, sizeof(f32));
     }
     return;
 }
@@ -386,7 +411,14 @@ void MathMod(Enemy *enemy, EclVarId outVarId, EclVarId *lhsVarId, EclVarId *rhsV
     {
         lhsPtr = (i32 *)GetVarFloat(enemy, (f32 *)lhsVarId, NULL);
         rhsPtr = (i32 *)GetVarFloat(enemy, (f32 *)rhsVarId, NULL);
-        *(f32 *)outPtr = ZUN_FMODF(*(f32 *)lhsPtr, *(f32 *)rhsPtr);
+
+        //*(f32 *)outPtr = ZUN_FMODF(*(f32 *)lhsPtr, *(f32 *)rhsPtr);
+
+        f32 lhs, rhs, res;
+        memcpy(&lhs, lhsPtr, sizeof(f32));
+        memcpy(&rhs, rhsPtr, sizeof(f32));
+        res = ZUN_FMODF(lhs,rhs);
+        memcpy(outPtr, &res, sizeof(f32));
     }
     return;
 }
@@ -404,7 +436,16 @@ void MathAtan2(Enemy *enemy, EclVarId outVarId, f32 *x1, f32 *y1, f32 *y2, f32 *
         x1Ptr = GetVarFloat(enemy, y1, NULL);
         y2Ptr = GetVarFloat(enemy, y2, NULL);
         x2Ptr = GetVarFloat(enemy, x2, NULL);
-        *outPtr = ZUN_ATAN2F(*x2Ptr - *x1Ptr, *y2Ptr - *y1Ptr);
+        //*outPtr = ZUN_ATAN2F(*x2Ptr - *x1Ptr, *y2Ptr - *y1Ptr);
+        
+        f32 x1, y1, x2, y2, res;
+        memcpy(&x1, x1Ptr, sizeof(f32));
+        memcpy(&y1, y1Ptr, sizeof(f32));
+        memcpy(&x2, x2Ptr, sizeof(f32));
+        memcpy(&y2, y2Ptr, sizeof(f32));
+        
+        res = ZUN_ATAN2F(x2-x1,y2-y1);
+        memcpy(outPtr, &res, sizeof(f32));
     }
     return;
 }

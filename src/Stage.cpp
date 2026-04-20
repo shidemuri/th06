@@ -506,6 +506,8 @@ ZunResult Stage::UpdateObjects()
 }
 
 
+//TODO: either rewrite this entirely or just make glDrawArrays better
+
 ZunResult Stage::RenderObjects(i32 zLevel)
 {
     f32 quadWidth;
@@ -545,7 +547,6 @@ ZunResult Stage::RenderObjects(i32 zLevel)
         if (obj->zLevel == zLevel)
         {
             curQuad = &obj->firstQuad;
-            #ifndef __3DS__
             unk8 = 0;
 
             //  Say hello to helper cube:
@@ -655,42 +656,9 @@ ZunResult Stage::RenderObjects(i32 zLevel)
             // If none of the points were in the viewport, we can skip this object
             // entirely.
             goto skip;
-            #else
-            //okay so this was written while using -O0 so i had a lot of bias towards BIG performance improv.
-            //when using a stubbed opengl (for no bias) and -O0 it would take 12-13ms to run this function on the demo play.
-            //with this rewrite it dropped to 3-5ms per call
-            //and when using -O2 it would take like only 1ms per call, and added with
-            f32 leftX = obj->position.x + instance->position.x - this->position.x;
-            f32 rightX = leftX + obj->size.x;
-            f32 botY = -(obj->position.y + instance->position.y - this->position.y);
-            f32 topY = botY - obj->size.y;
-
-            f32 farZ = obj->position.z + instance->position.z - this->position.z;
-            f32 nearZ = farZ + obj->size.z;
-            //yeah the naming is all wrong ill change it later
-            f32 kube[8][3] = {
-                {leftX, botY, nearZ},
-                {leftX, topY, nearZ},
-                {leftX, topY, farZ},
-                {leftX, botY, farZ},
-                {rightX, botY, nearZ},
-                {rightX, topY, nearZ},
-                {rightX, topY, farZ},
-                {rightX, botY, farZ}
-            };
-            for(i32 i = 0; i < 8; i++) {
-                f32 wx = kube[i][0];
-                f32 wy = kube[i][1];
-                f32 wz = kube[i][2];
-                f32 clipX = vp.m[0][0]*wx + vp.m[1][0]*wy + vp.m[2][0]*wz + vp.m[3][0];
-                f32 clipY = vp.m[0][1]*wx + vp.m[1][1]*wy + vp.m[2][1]*wz + vp.m[3][1];
-                f32 clipW = vp.m[0][2]*wx + vp.m[1][2]*wy + vp.m[2][2]*wz + vp.m[3][2];
-                if(clipY >= -clipW && clipY <= clipW) goto render;
-            }
-            goto skip;
-            #endif
         render:
             didDraw = true;
+            startDebug = svcGetSystemTick();
             while (0 <= curQuad->type)
             {
                 curQuadVm = this->quadVms + curQuad->vmIdx;
@@ -718,7 +686,6 @@ ZunResult Stage::RenderObjects(i32 zLevel)
                         {
                             quadWidth = curQuadVm->sprite->widthPx;
                         }
-                        #ifndef __3DS__
                         worldMatrix.m[3][0] = curQuadVm->pos.x;
                         worldMatrix.m[3][1] = -curQuadVm->pos.y;
                         worldMatrix.m[3][2] = curQuadVm->pos.z;
@@ -727,23 +694,6 @@ ZunResult Stage::RenderObjects(i32 zLevel)
                         worldMatrix.m[3][0] = quadWidth * curQuadVm->scaleX + worldMatrix.m[3][0];
                         projectVec3(quadScaledPos, projectSrc, g_Supervisor.viewport, g_Supervisor.projectionMatrix,
                                     g_Supervisor.viewMatrix, worldMatrix);
-                        #else
-                        f32 wx1 = curQuadVm->pos.x;
-                        f32 wy  = -curQuadVm->pos.y;
-                        f32 wz  = curQuadVm->pos.z;
-
-                        f32 clipY = vp.m[0][1]*wx1 + vp.m[1][1]*wy + vp.m[2][1]*wz + vp.m[3][1];
-                        f32 clipW = vp.m[0][2]*wx1 + vp.m[1][2]*wy + vp.m[2][2]*wz + vp.m[3][2];
-                        f32 invW  = 1.f / clipW;
-                        f32 screenY = mapRange(clipY * invW, -1.f, 1.f, vBottom, vTop);
-
-                        f32 clipX1 = vp.m[0][0]*wx1 + vp.m[1][0]*wy + vp.m[2][0]*wz + vp.m[3][0];
-                        quadPos.x = mapRange(clipX1 * invW, -1.f, 1.f, vLeft, vRight);
-                        quadPos.y = screenY;
-
-                        f32 clipX2 = clipX1 + vp.m[0][0] * (quadWidth * curQuadVm->scaleX);
-                        quadScaledPos.x = mapRange(clipX2 * invW, -1.f, 1.f, vLeft, vRight);
-                        #endif
                         curQuadVm->scaleX = (quadScaledPos.x - quadPos.x) / quadWidth;
                         curQuadVm->scaleY = curQuadVm->scaleX;
                         curQuadVm->pos = quadPos;

@@ -78,6 +78,7 @@ ZunResult SoundPlayer::InitializeDSound()
 
     desiredAudio.callback = AudioCallback;
     desiredAudio.userdata = this;
+    //desiredAudio.callback = NULL;
 
     this->audioDev = SDL_OpenAudioDevice(NULL, 0, &desiredAudio, &obtainedAudio, 0);
 
@@ -85,6 +86,9 @@ ZunResult SoundPlayer::InitializeDSound()
     {
         goto fail;
     }
+
+
+    //this->backgroundMusicThreadHandle = std::thread(&SoundPlayer::BackgroundMusicPlayerThread, this);
     SDL_PauseAudioDevice(this->audioDev, 0);
 
     GameErrorContext::Log(&g_GameErrorContext, TH_DBG_SOUNDPLAYER_INIT_SUCCESS);
@@ -97,6 +101,11 @@ fail:
 
 ZunResult SoundPlayer::Release(void)
 {
+
+    //this->terminateFlag = true;
+    //this->backgroundMusicThreadHandle.join();
+    //this->terminateFlag = false;
+
     StopBGM();
 
     for (int i = 0; i < ARRAY_SIZE_SIGNED(this->soundBuffers); i++)
@@ -562,12 +571,12 @@ i16* SoundPlayer::MixAudio(u32 samples, i16* outBuffer)
             //the previous implementation read samples from the SD card one at a time which on desktop builds isn't an issue
             //because whatever the OS does idk whatever but on the 3DS its very slow
             //so now we just read everything from the SD card at once
-            i16 sampleBuf[samplesToMix * 2];
-            SDL_RWread(backgroundMusic.srcWav.fileStream, sampleBuf, samplesToMix * sizeof(i16) * 2, 1);
+            u16 sampleBuf[samplesToMix * 2];
+            SDL_RWread(backgroundMusic.srcWav.fileStream, sampleBuf, sizeof(u16), samplesToMix * 2);
             for (u32 j = 0; j < samplesToMix; j++)
             {
-                mixBuffer[samplesMixed + j * 2] += sampleBuf[j * 2] * fadeoutMult;
-                mixBuffer[samplesMixed + j * 2 + 1] += sampleBuf[j * 2 + 1] * fadeoutMult;
+                mixBuffer[samplesMixed + j * 2] += ((i16)SDL_SwapLE16(sampleBuf[j * 2])) * fadeoutMult;
+                mixBuffer[samplesMixed + j * 2 + 1] += ((i16)SDL_SwapLE16(sampleBuf[j * 2 + 1])) * fadeoutMult;
             }
 
             backgroundMusic.pos += samplesToMix;
@@ -626,4 +635,168 @@ i16* SoundPlayer::MixAudio(u32 samples, i16* outBuffer)
 
     std::copy(finalBuffer.begin(), finalBuffer.end(), outBuffer);
     return outBuffer;
+}
+
+/*
+void SoundPlayer::MixAudio(u32 samples)
+{
+    std::vector<i16> finalBuffer(samples);
+    std::vector<i32> mixBuffer(samples);
+    u8 playingChannels = 0;
+
+    soundBufMutex.lock();
+
+    for (int i = 0; i < ARRAY_SIZE_SIGNED(soundBuffers); i++)
+    {
+        if (!soundBuffers[i].isPlaying)
+        {
+            continue;
+        }
+
+        playingChannels++;
+
+        // Sounds are all mono, so we need to duplicate each sample for stereo output
+        const u32 samplesToMix = std::min(samples / 2, soundBuffers[i].len - soundBuffers[i].pos);
+
+        for (u32 j = 0; j < samplesToMix; j++)
+        {
+            mixBuffer[j * 2] += soundBuffers[i].samples[soundBuffers[i].pos + j];
+            mixBuffer[j * 2 + 1] += soundBuffers[i].samples[soundBuffers[i].pos + j];
+        }
+
+        soundBuffers[i].pos += samplesToMix;
+
+        if (soundBuffers[i].pos == soundBuffers[i].len)
+        {
+            soundBuffers[i].isPlaying = false;
+        }
+    }
+
+    if (backgroundMusic.srcWav.fileStream != NULL)
+    {
+        u32 samplesMixed = 0;
+        f32 fadeoutMult;
+
+        if (backgroundMusic.fadeoutLen != 0)
+        {
+            f32 fadeoutInterp = mapRange(backgroundMusic.fadeoutProgress, 0, backgroundMusic.fadeoutLen, 0, 5);
+            fadeoutMult = 1.0f / ZUN_POWF(10.0f, fadeoutInterp / 2.0f);
+        }
+        else
+        {
+            fadeoutMult = 1.0f;
+        }
+
+        while (samplesMixed < samples / 2)
+        {
+            const u32 samplesToMix =
+                std::min((samples / 2) - samplesMixed, backgroundMusic.loopEnd - backgroundMusic.pos);
+
+            u16 sampleBuf[samplesToMix * 2];
+            SDL_RWread(backgroundMusic.srcWav.fileStream, sampleBuf, sizeof(u16), samplesToMix * 2);
+            for (u32 j = 0; j < samplesToMix; j++)
+            {
+                mixBuffer[samplesMixed + j * 2] += (i16)SDL_SwapLE16(sampleBuf[j * 2]) * fadeoutMult;
+                mixBuffer[samplesMixed + j * 2 + 1] += (i16)SDL_SwapLE16(sampleBuf[j * 2 + 1]) * fadeoutMult;
+            }
+
+            backgroundMusic.pos += samplesToMix;
+            samplesMixed += samplesToMix;
+
+            if (backgroundMusic.pos == backgroundMusic.loopEnd)
+            {
+                if (this->isLooping)
+                {
+                    backgroundMusic.pos = backgroundMusic.loopStart;
+                    SDL_RWseek(backgroundMusic.srcWav.fileStream,
+                               backgroundMusic.srcWav.dataStartOffset + backgroundMusic.pos * 4, SEEK_SET);
+                }
+                else
+                {
+                    SDL_RWclose(backgroundMusic.srcWav.fileStream);
+                    backgroundMusic.srcWav.fileStream = NULL;
+
+                    break;
+                }
+            }
+        }
+
+        if (backgroundMusic.fadeoutLen != 0)
+        {
+            backgroundMusic.fadeoutProgress += samplesMixed;
+
+            if (backgroundMusic.fadeoutProgress >= backgroundMusic.fadeoutLen)
+            {
+                SDL_RWclose(backgroundMusic.srcWav.fileStream);
+                backgroundMusic.srcWav.fileStream = NULL;
+            }
+        }
+
+        playingChannels++;
+    }
+
+    soundBufMutex.unlock();
+
+    // DirectSound supports playing from an arbitrary number of buffers at once, but that's kind of
+    //   difficult to get right as it turns out. Instead we use 8 as an assumption of the
+    //   max number of channels that could possibly be playing at once. If more channels end up in use,
+    //   the input volume of each channel will start scaling down, which isn't correct, but would
+    //   likely be imperceptible with that many channels anyway.
+
+    const int mixDivisor = std::max(8, (int)playingChannels);
+
+    for (u32 i = 0; i < samples; i++)
+    {
+        // Integer division like this doesn't get optimized at all by the compiler. If it becomes
+        //   a problem, it could be a good idea to convert to float, or to do the division as
+        //   fixed point multiplication by the inverse of mixDivisor, depending on what's faster
+        //   on any particular platform
+        finalBuffer[i] = mixBuffer[i] / mixDivisor;
+    }
+
+    SDL_QueueAudio(audioDev, finalBuffer.data(), samples * 2);
+}*/
+
+void SoundPlayer::BackgroundMusicPlayerThread()
+{
+    /*SDL_PauseAudioDevice(this->audioDev, 0);
+
+    u32 latencyLimit = 14'700; // ~5 frames
+    u64 samplesSent = 0;
+    u64 startTick = SDL_GetTicks64();
+
+    while (1)
+    {
+        u64 curTicks = SDL_GetTicks64();
+
+        // Keep slightly more than 1 frame's worth of samples in the audio buffer at all times
+        i32 targetSamples = (curTicks - startTick) * 44.100 - samplesSent + 1024;
+
+        // Quick and dirty checks to keep audio latency low
+        //   Can probably be horribly broken, but I don't have weaker hardware to test on
+        if (SDL_GetQueuedAudioSize(this->audioDev) > latencyLimit)
+        {
+            latencyLimit += 2'940; // 1 frame
+            samplesSent += targetSamples;
+            targetSamples = 0;
+        }
+        else if (targetSamples > 1024)
+        {
+            samplesSent += targetSamples - 1024;
+            targetSamples = 1024;
+        }
+
+        if (targetSamples > 0)
+        {
+            this->MixAudio(targetSamples * 2);
+            samplesSent += targetSamples;
+        }
+
+        if (this->terminateFlag)
+        {
+            return;
+        }
+
+        SDL_Delay(5);
+    }*/
 }
