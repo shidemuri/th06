@@ -51,6 +51,7 @@ This project has the following dependencies:
 
 ### build from source:
 
+- [`my fork of picaGL`](https://github.com/shidemuri/picaGL)
 - `SDL2`
 - `SDL2_image`
 - `SDL2_ttf`
@@ -61,7 +62,7 @@ This project has the following dependencies:
 1. Install the other dependencies
 2. Clone the repositories
   
-  <code>git clone https://github.com/libsdl-org/(SDL or SDL_image or SDL_ttf).git -b SDL2
+<code>git clone https://github.com/libsdl-org/\<SDL or SDL_image or SDL_ttf\>.git -b SDL2
 cd SDL
 mkdir build</code>
 
