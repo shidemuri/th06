@@ -167,6 +167,17 @@ struct AnmManager
     ~AnmManager();
 
     //    void ReleaseVertexBuffer();
+    u32 spritesToDraw;
+    VertexTex1Xyzrhw* vertexBufferStartPtr;
+    VertexTex1Xyzrhw* vertexBufferEndPtr;
+    VertexTex1Xyzrhw  vertexBuffer[0x18000];
+
+    //ZunResult AddSpriteToDrawBuffer(VertexTex1Xyzrhw *vertices);
+    u32 renderStateChangesThisFrame;
+    u32 flushesThisFrame;
+    ZunResult AddSpriteToDrawBuffer(VertexTex1Xyzrhw *vertices);
+    void FlushVertexBuffer();
+    void ClearVertexBuffer();
     void SetupVertexBuffer();
 
     ZunResult CreateEmptyTexture(i32 textureIdx, u32 width, u32 height, i32 textureFormat);
@@ -197,6 +208,7 @@ struct AnmManager
         }
 
         g_glFuncTable.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        //g_glFuncTable.glDrawArrays(GL_TRIANGLES, 0, this->spritesToDraw * 6);
     }
 
     // We need to do checks in these because they're called nearly every ANM draw call and otherwise

@@ -65,7 +65,9 @@ RenderResult GameWindow::Render()
                 g_Supervisor.viewport.Set();
             }
 
+            g_AnmManager->ClearVertexBuffer();
             g_Chain.RunDrawChain();
+            //g_AnmManager->FlushVertexBuffer();
             g_AnmManager->SetCurrentTexture(0);
         }
 

@@ -207,6 +207,7 @@ AnmManager::AnmManager()
     this->maybeLoadedSpriteCount = 0;
 
     std::memset(this, 0, sizeof(AnmManager));
+    this->ClearVertexBuffer();
 
     for (i32 spriteIndex = 0; spriteIndex < ARRAY_SIZE_SIGNED(this->sprites); spriteIndex++)
     {
@@ -303,22 +304,13 @@ void AnmManager::SetupVertexBuffer()
 
     //    RenderVertexInfo *buffer;
 
-    if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF) & 1) == 0)
-    {
-        //        g_Supervisor.d3dDevice->CreateVertexBuffer(sizeof(this->vertexBufferContents), 0, D3DFVF_TEX1 |
-        //        D3DFVF_XYZ,
-        //                                                   D3DPOOL_MANAGED, &this->vertexBuffer);
-        //
-        //        this->vertexBuffer->Lock(0, 0, (BYTE **)&buffer, 0);
-        //        memcpy(buffer, this->vertexBufferContents, sizeof(this->vertexBufferContents));
-        //        this->vertexBuffer->Unlock();
-        //
-        //        g_Supervisor.d3dDevice->SetStreamSource(0, g_AnmManager->vertexBuffer, sizeof(RenderVertexInfo));
+    //if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF) & 1) == 0)
+    //{
         this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(*vertexBufferContents),
                                   &this->vertexBufferContents[0].position);
         this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(*vertexBufferContents),
                                   &this->vertexBufferContents[0].textureUV);
-    }
+    //}
 }
 
 ZunResult AnmManager::LoadTexture(i32 textureIdx, char *textureName, i32 textureFormat, ZunColor colorKey)
@@ -707,16 +699,15 @@ void AnmManager::SetRenderStateForVm(AnmVm *vm)
 {
     if (this->currentBlendMode != vm->flags.blendMode)
     {
+        this->FlushVertexBuffer();
         this->currentBlendMode = vm->flags.blendMode;
         if (this->currentBlendMode == AnmVmBlendMode_InvSrcAlpha)
         {
             g_glFuncTable.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            //            g_Supervisor.d3dDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
         }
         else
         {
             g_glFuncTable.glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-            //            g_Supervisor.d3dDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
         }
     }
 
@@ -725,10 +716,10 @@ void AnmManager::SetRenderStateForVm(AnmVm *vm)
         this->SetColorOp(COMPONENT_RGB, (ColorOp)vm->flags.colorOp);
     }
 
-    if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF) & 1) == 0)
-    {
+    //if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF) & 1) == 0)
+    //{
         this->SetTextureFactor(vm->color);
-    }
+    /*}
     else
     {
         g_PrimitivesToDrawNoVertexBuf[0].diffuse = vm->color;
@@ -739,7 +730,7 @@ void AnmManager::SetRenderStateForVm(AnmVm *vm)
         g_PrimitivesToDrawUnknown[1].diffuse = vm->color;
         g_PrimitivesToDrawUnknown[2].diffuse = vm->color;
         g_PrimitivesToDrawUnknown[3].diffuse = vm->color;
-    }
+    }*/
 
     this->SetDepthMask(!vm->flags.zWriteDisable);
 
@@ -857,6 +848,7 @@ void AnmManager::UpdateDirtyStates()
 
 ZunResult AnmManager::DrawOrthographic(AnmVm *vm, bool roundToPixel)
 {
+    static u32 swag = 0;
     if (roundToPixel)
     {
         // In the original D3D code, 0.5 was subtracted from the final position here to center on D3D
@@ -874,6 +866,8 @@ ZunResult AnmManager::DrawOrthographic(AnmVm *vm, bool roundToPixel)
     }
     g_PrimitivesToDrawVertexBuf[0].position.z = g_PrimitivesToDrawVertexBuf[1].position.z =
         g_PrimitivesToDrawVertexBuf[2].position.z = g_PrimitivesToDrawVertexBuf[3].position.z = vm->pos.z;
+    
+    
     if (this->currentSprite != vm->sprite)
     {
         this->currentSprite = vm->sprite;
@@ -886,69 +880,112 @@ ZunResult AnmManager::DrawOrthographic(AnmVm *vm, bool roundToPixel)
         g_PrimitivesToDrawVertexBuf[2].textureUV.y = g_PrimitivesToDrawVertexBuf[3].textureUV.y =
             vm->sprite->uvEnd.y + vm->uvScrollPos.y;
 
-        this->SetCurrentTexture(this->textures[vm->sprite->sourceFileIndex].handle);
-    }
-
-    if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF) & 1) == 0)
-    {
-        this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
-    }
-    else
-    {
-        this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD | VERTEX_ATTR_DIFFUSE);
+        GLuint newHandle = this->textures[vm->sprite->sourceFileIndex].handle;
+        if (this->currentTextureHandle != newHandle) {
+            this->FlushVertexBuffer();
+            this->SetCurrentTexture(newHandle);
+        }
     }
 
     this->SetRenderStateForVm(vm);
+    this->AddSpriteToDrawBuffer(g_PrimitivesToDrawVertexBuf);
+
+    /*this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
+
+    this->SetRenderStateForVm(vm);
+    this->AddSpriteToDrawBuffer(g_PrimitivesToDrawVertexBuf);
 
     this->SetProjectionMode(PROJECTION_MODE_ORTHOGRAPHIC);
 
-    //    if (roundToPixel)
-    //    {
-    //        g_glFuncTable.glMatrixMode(GL_MODELVIEW);
-    //        g_glFuncTable.glTranslatef(0.5f, 0.5f, 0.0f);
-    //    }
+    this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(*g_PrimitivesToDrawVertexBuf),
+                                &g_PrimitivesToDrawVertexBuf[0].position);
+    this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(*g_PrimitivesToDrawVertexBuf),
+                                &g_PrimitivesToDrawVertexBuf[0].textureUV);
 
-    if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF) & 1) == 0)
-    {
-        this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(*g_PrimitivesToDrawVertexBuf),
-                                  &g_PrimitivesToDrawVertexBuf[0].position);
-        this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(*g_PrimitivesToDrawVertexBuf),
-                                  &g_PrimitivesToDrawVertexBuf[0].textureUV);
-        //        g_Supervisor.d3dDevice->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, g_PrimitivesToDrawVertexBuf, 0x18);
-    }
-    else
-    {
-        g_PrimitivesToDrawNoVertexBuf[0].position.x = g_PrimitivesToDrawVertexBuf[0].position.x;
-        g_PrimitivesToDrawNoVertexBuf[0].position.y = g_PrimitivesToDrawVertexBuf[0].position.y;
-        g_PrimitivesToDrawNoVertexBuf[0].position.z = g_PrimitivesToDrawVertexBuf[0].position.z;
-        g_PrimitivesToDrawNoVertexBuf[1].position.x = g_PrimitivesToDrawVertexBuf[1].position.x;
-        g_PrimitivesToDrawNoVertexBuf[1].position.y = g_PrimitivesToDrawVertexBuf[1].position.y;
-        g_PrimitivesToDrawNoVertexBuf[1].position.z = g_PrimitivesToDrawVertexBuf[1].position.z;
-        g_PrimitivesToDrawNoVertexBuf[2].position.x = g_PrimitivesToDrawVertexBuf[2].position.x;
-        g_PrimitivesToDrawNoVertexBuf[2].position.y = g_PrimitivesToDrawVertexBuf[2].position.y;
-        g_PrimitivesToDrawNoVertexBuf[2].position.z = g_PrimitivesToDrawVertexBuf[2].position.z;
-        g_PrimitivesToDrawNoVertexBuf[3].position.x = g_PrimitivesToDrawVertexBuf[3].position.x;
-        g_PrimitivesToDrawNoVertexBuf[3].position.y = g_PrimitivesToDrawVertexBuf[3].position.y;
-        g_PrimitivesToDrawNoVertexBuf[3].position.z = g_PrimitivesToDrawVertexBuf[3].position.z;
-        g_PrimitivesToDrawNoVertexBuf[0].textureUV.x = g_PrimitivesToDrawNoVertexBuf[2].textureUV.x =
-            vm->sprite->uvStart.x + vm->uvScrollPos.x;
-        g_PrimitivesToDrawNoVertexBuf[1].textureUV.x = g_PrimitivesToDrawNoVertexBuf[3].textureUV.x =
-            vm->sprite->uvEnd.x + vm->uvScrollPos.x;
-        g_PrimitivesToDrawNoVertexBuf[0].textureUV.y = g_PrimitivesToDrawNoVertexBuf[1].textureUV.y =
-            vm->sprite->uvStart.y + vm->uvScrollPos.y;
-        g_PrimitivesToDrawNoVertexBuf[2].textureUV.y = g_PrimitivesToDrawNoVertexBuf[3].textureUV.y =
-            vm->sprite->uvEnd.y + vm->uvScrollPos.y;
+    this->BackendDrawCall();*/
 
-        this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(*g_PrimitivesToDrawNoVertexBuf),
-                                  &g_PrimitivesToDrawNoVertexBuf[0].position);
-        this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(*g_PrimitivesToDrawNoVertexBuf),
-                                  &g_PrimitivesToDrawNoVertexBuf[0].textureUV);
-        this->SetAttributePointer(VERTEX_ARRAY_DIFFUSE, sizeof(*g_PrimitivesToDrawNoVertexBuf),
-                                  &g_PrimitivesToDrawNoVertexBuf[0].diffuse);
-        //        g_Supervisor.d3dDevice->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, g_PrimitivesToDrawNoVertexBuf, 0x1c);
+    return ZUN_SUCCESS;
+}
+
+void AnmManager::ClearVertexBuffer()
+{
+    this->spritesToDraw = 0;
+    this->vertexBufferStartPtr = this->vertexBufferEndPtr = this->vertexBuffer;
+}
+
+void AnmManager::FlushVertexBuffer()
+{
+    if (this->spritesToDraw == 0)
+    {
+        return;
     }
 
-    this->BackendDrawCall();
+    utils::DebugPrint2("Flushing vertex buffer: %d sprites", this->spritesToDraw);
+
+    /*g_Supervisor.d3dDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+    g_Supervisor.d3dDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+    g_Supervisor.d3dDevice->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
+    g_Supervisor.d3dDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, this->spritesToDraw * 2, this->vertexBufferStartPtr,
+                                            sizeof(VertexTex1DiffuseXyzrhw));*/
+
+    /*this->SetAttributePointer(VERTEX_ARRAY_POSITION,
+        sizeof(VertexTex1DiffuseXyz),
+        &this->vertexBuffer[0].position);
+
+    this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD,
+        sizeof(VertexTex1DiffuseXyz),
+        &this->vertexBuffer[0].textureUV);
+
+    this->SetAttributePointer(VERTEX_ARRAY_DIFFUSE,
+        sizeof(VertexTex1DiffuseXyz),
+        &this->vertexBuffer[0].diffuse);
+    g_glFuncTable.glDrawArrays(GL_TRIANGLES, 0, this->spritesToDraw*6);
+    
+    this->UpdateDirtyStates();*/
+    this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
+
+    this->SetProjectionMode(PROJECTION_MODE_ORTHOGRAPHIC);
+
+    this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(VertexTex1Xyzrhw),
+                                &this->vertexBufferStartPtr->position);
+    this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(VertexTex1Xyzrhw),
+                                &this->vertexBufferStartPtr->textureUV);
+
+    if(this->dirtyFlags != 0) this->UpdateDirtyStates();
+    g_glFuncTable.glDrawArrays(GL_TRIANGLES, 0, this->spritesToDraw * 6);
+    //this->BackendDrawCall();
+
+    this->ClearVertexBuffer();
+    this->flushesThisFrame++;
+}
+
+/* This function copies 4 vertices creating a quad into 6 vertices
+ * (2 triangles) for rendering.
+ */
+
+static inline VertexTex1DiffuseXyzrhw RHWStrip(VertexTex1Xyzrhw yukkuri) {
+    VertexTex1DiffuseXyzrhw asd;
+    asd.position = yukkuri.position;//ZunVec4(yukkuri.position.x,yukkuri.position.y,yukkuri.position.z);
+    //asd.diffuse = g_AnmManager->textureFactor;
+    asd.textureUV = yukkuri.textureUV;
+    return asd;
+};
+ZunResult AnmManager::AddSpriteToDrawBuffer(VertexTex1Xyzrhw *vertices)
+{
+    //TODO: ugh we shouldnt need this at all
+    if((this->vertexBufferEndPtr - this->vertexBuffer) + 6 >= 0x18000) {
+        utils::DebugPrint2("Vertex buffer is full, flushing...");
+        this->FlushVertexBuffer();
+    }
+    this->vertexBufferEndPtr[0] = (vertices[0]);
+    this->vertexBufferEndPtr[1] = (vertices[1]);
+    this->vertexBufferEndPtr[2] = (vertices[2]);
+    this->vertexBufferEndPtr[3] = (vertices[2]);
+    this->vertexBufferEndPtr[4] = (vertices[1]);
+    this->vertexBufferEndPtr[5] = (vertices[3]);
+
+    this->vertexBufferEndPtr += 6;
+    this->spritesToDraw++;
 
     return ZUN_SUCCESS;
 }
@@ -1111,7 +1148,7 @@ ZunResult AnmManager::DrawFacingCamera(AnmVm *vm)
 
 ZunResult AnmManager::Draw3(AnmVm *vm)
 {
-    ZunMatrix worldTransformMatrix;
+    /*ZunMatrix worldTransformMatrix;
     ZunMatrix rotationMatrix;
     ZunMatrix textureMatrix;
     f32 scaledXCenter;
@@ -1201,45 +1238,45 @@ ZunResult AnmManager::Draw3(AnmVm *vm)
         SetCurrentTexture(this->textures[vm->sprite->sourceFileIndex].handle);
     }
 
-    if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF) & 1) == 0)
-    {
+    //if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF) & 1) == 0)
+    //{
         this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
-    }
-    else
-    {
-        this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD | VERTEX_ATTR_DIFFUSE);
-    }
+    //}
+    //else
+    //{
+    //    this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD | VERTEX_ATTR_DIFFUSE);
+    //}
 
     // Reset the render state based on the settings fo the given VM.
     this->SetRenderStateForVm(vm);
 
     // Draw the VM.
-    if ((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF & 1) == 0)
-    {
+    //if ((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF & 1) == 0)
+    //{
         this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(*g_PrimitivesToDrawUnknown),
                                   &g_PrimitivesToDrawUnknown[0].position);
         this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(*g_PrimitivesToDrawUnknown),
                                   &g_PrimitivesToDrawUnknown[0].textureUV);
-    }
-    else
-    {
-        this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(*g_PrimitivesToDrawUnknown),
-                                  &g_PrimitivesToDrawUnknown[0].position);
-        this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(*g_PrimitivesToDrawUnknown),
-                                  &g_PrimitivesToDrawUnknown[0].textureUV);
-        this->SetAttributePointer(VERTEX_ARRAY_DIFFUSE, sizeof(*g_PrimitivesToDrawUnknown),
-                                  &g_PrimitivesToDrawUnknown[0].diffuse);
-    }
+    //}
+    //else
+    //{
+    //    this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(*g_PrimitivesToDrawUnknown),
+    //                              &g_PrimitivesToDrawUnknown[0].position);
+    //    this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(*g_PrimitivesToDrawUnknown),
+    //                              &g_PrimitivesToDrawUnknown[0].textureUV);
+    //    this->SetAttributePointer(VERTEX_ARRAY_DIFFUSE, sizeof(*g_PrimitivesToDrawUnknown),
+    //                              &g_PrimitivesToDrawUnknown[0].diffuse);
+    //}
 
     this->BackendDrawCall();
 
-    this->SetTransformMatrix(MATRIX_VIEW, originalView);
+    this->SetTransformMatrix(MATRIX_VIEW, originalView);*/
     return ZUN_SUCCESS;
 }
 
 ZunResult AnmManager::Draw2(AnmVm *vm)
 {
-    ZunMatrix worldTransformMatrix;
+    /*ZunMatrix worldTransformMatrix;
     ZunMatrix unusedMatrix;
     ZunMatrix textureMatrix;
 
@@ -1300,42 +1337,42 @@ ZunResult AnmManager::Draw2(AnmVm *vm)
 
         SetCurrentTexture(this->textures[vm->sprite->sourceFileIndex].handle);
 
-        if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF) & 1) == 0)
-        {
+        //if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF) & 1) == 0)
+        //{
             this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
-        }
-        else
-        {
-            this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD | VERTEX_ATTR_DIFFUSE);
-        }
+        //}
+        //else
+        //{
+        //    this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD | VERTEX_ATTR_DIFFUSE);
+        //}
     }
 
     this->SetRenderStateForVm(vm);
 
-    if ((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF & 1) == 0)
-    {
+    //if ((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF & 1) == 0)
+    //{
         this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(*g_PrimitivesToDrawUnknown),
                                   &g_PrimitivesToDrawUnknown[0].position);
         this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(*g_PrimitivesToDrawUnknown),
                                   &g_PrimitivesToDrawUnknown[0].textureUV);
 
         //        g_Supervisor.d3dDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-    }
-    else
-    {
-        this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(*g_PrimitivesToDrawUnknown),
-                                  &g_PrimitivesToDrawUnknown[0].position);
-        this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(*g_PrimitivesToDrawUnknown),
-                                  &g_PrimitivesToDrawUnknown[0].textureUV);
-        this->SetAttributePointer(VERTEX_ARRAY_DIFFUSE, sizeof(*g_PrimitivesToDrawUnknown),
-                                  &g_PrimitivesToDrawUnknown[0].diffuse);
+    //}
+    //else
+    //{
+    //    this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(*g_PrimitivesToDrawUnknown),
+    //                              &g_PrimitivesToDrawUnknown[0].position);
+    //    this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(*g_PrimitivesToDrawUnknown),
+    //                              &g_PrimitivesToDrawUnknown[0].textureUV);
+    //    this->SetAttributePointer(VERTEX_ARRAY_DIFFUSE, sizeof(*g_PrimitivesToDrawUnknown),
+    //                              &g_PrimitivesToDrawUnknown[0].diffuse);
 
-        //        g_Supervisor.d3dDevice->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, , 0x18);
-    }
+    //    //        g_Supervisor.d3dDevice->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, , 0x18);
+    //}
 
     this->BackendDrawCall();
 
-    this->SetTransformMatrix(MATRIX_VIEW, originalView);
+    this->SetTransformMatrix(MATRIX_VIEW, originalView);*/
 
     return ZUN_SUCCESS;
 }
@@ -2092,6 +2129,8 @@ void AnmManager::ApplySurfaceToColorBuffer(i32 src, const SDL_Rect &srcRect, con
     fullscreenViewport.width = GAME_WINDOW_WIDTH;
     fullscreenViewport.minZ = 0.0f;
     fullscreenViewport.maxZ = 1.0f;
+
+    this->FlushVertexBuffer();
 
     fullscreenViewport.Set();
 
