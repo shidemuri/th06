@@ -909,51 +909,56 @@ ZunResult AnmManager::DrawOrthographic(AnmVm *vm, bool roundToPixel)
 
 void AnmManager::ClearVertexBuffer()
 {
-    this->spritesToDraw = 0;
+    this->spritesToDraw = this->objectsToDraw = 0;
     this->vertexBufferStartPtr = this->vertexBufferEndPtr = this->vertexBuffer;
+    this->vertexBuffer3dStartPtr = this->vertexBuffer3dEndPtr = this->vertexBuffer3d;
 }
 
 void AnmManager::FlushVertexBuffer()
 {
-    if (this->spritesToDraw == 0)
+    if (this->spritesToDraw == 0 && this->objectsToDraw == 0)
     {
         return;
     }
 
-    utils::DebugPrint2("Flushing vertex buffer: %d sprites", this->spritesToDraw);
+    if (this->spritesToDraw > 0) {
+        utils::DebugPrint2("Flushing 2d vertex buffer: %d sprites", this->spritesToDraw);
+
+        this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
+        this->SetProjectionMode(PROJECTION_MODE_ORTHOGRAPHIC);
+
+
+        this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(VertexTex1Xyzrhw),
+                                    &this->vertexBufferStartPtr->position);
+        this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(VertexTex1Xyzrhw),
+                                    &this->vertexBufferStartPtr->textureUV);
+
+        if(this->dirtyFlags != 0) this->UpdateDirtyStates();
+        g_glFuncTable.glDrawArrays(GL_TRIANGLES, 0, this->spritesToDraw * 6);
+    }
+
+    if (this->objectsToDraw > 0) {
+        utils::DebugPrint2("Flushing 3d vertex buffer: %d objects", this->objectsToDraw);
+
+        this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
+        this->SetProjectionMode(PROJECTION_MODE_PERSPECTIVE);
+
+        ZunMatrix identity;
+        identity.Identity();
+        this->SetTransformMatrix(MATRIX_VIEW, identity);
+        this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(VertexTex1DiffuseXyz),
+                            &this->vertexBuffer3dStartPtr->position);
+        this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(VertexTex1DiffuseXyz),
+                                  &this->vertexBuffer3dStartPtr->textureUV);
+        if(this->dirtyFlags != 0) this->UpdateDirtyStates();
+        g_glFuncTable.glDrawArrays(GL_TRIANGLES, 0, this->objectsToDraw * 6);
+    }
 
     /*g_Supervisor.d3dDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
     g_Supervisor.d3dDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
     g_Supervisor.d3dDevice->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
     g_Supervisor.d3dDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, this->spritesToDraw * 2, this->vertexBufferStartPtr,
                                             sizeof(VertexTex1DiffuseXyzrhw));*/
-
-    /*this->SetAttributePointer(VERTEX_ARRAY_POSITION,
-        sizeof(VertexTex1DiffuseXyz),
-        &this->vertexBuffer[0].position);
-
-    this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD,
-        sizeof(VertexTex1DiffuseXyz),
-        &this->vertexBuffer[0].textureUV);
-
-    this->SetAttributePointer(VERTEX_ARRAY_DIFFUSE,
-        sizeof(VertexTex1DiffuseXyz),
-        &this->vertexBuffer[0].diffuse);
-    g_glFuncTable.glDrawArrays(GL_TRIANGLES, 0, this->spritesToDraw*6);
-    
-    this->UpdateDirtyStates();*/
-    this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
-
-    this->SetProjectionMode(PROJECTION_MODE_ORTHOGRAPHIC);
-
-    this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(VertexTex1Xyzrhw),
-                                &this->vertexBufferStartPtr->position);
-    this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(VertexTex1Xyzrhw),
-                                &this->vertexBufferStartPtr->textureUV);
-
-    if(this->dirtyFlags != 0) this->UpdateDirtyStates();
-    g_glFuncTable.glDrawArrays(GL_TRIANGLES, 0, this->spritesToDraw * 6);
-    //this->BackendDrawCall();
 
     this->ClearVertexBuffer();
     this->flushesThisFrame++;
@@ -963,20 +968,8 @@ void AnmManager::FlushVertexBuffer()
  * (2 triangles) for rendering.
  */
 
-static inline VertexTex1DiffuseXyzrhw RHWStrip(VertexTex1Xyzrhw yukkuri) {
-    VertexTex1DiffuseXyzrhw asd;
-    asd.position = yukkuri.position;//ZunVec4(yukkuri.position.x,yukkuri.position.y,yukkuri.position.z);
-    //asd.diffuse = g_AnmManager->textureFactor;
-    asd.textureUV = yukkuri.textureUV;
-    return asd;
-};
 ZunResult AnmManager::AddSpriteToDrawBuffer(VertexTex1Xyzrhw *vertices)
 {
-    //TODO: ugh we shouldnt need this at all
-    if((this->vertexBufferEndPtr - this->vertexBuffer) + 6 >= 0x18000) {
-        utils::DebugPrint2("Vertex buffer is full, flushing...");
-        this->FlushVertexBuffer();
-    }
     this->vertexBufferEndPtr[0] = (vertices[0]);
     this->vertexBufferEndPtr[1] = (vertices[1]);
     this->vertexBufferEndPtr[2] = (vertices[2]);
@@ -986,6 +979,21 @@ ZunResult AnmManager::AddSpriteToDrawBuffer(VertexTex1Xyzrhw *vertices)
 
     this->vertexBufferEndPtr += 6;
     this->spritesToDraw++;
+
+    return ZUN_SUCCESS;
+}
+
+ZunResult AnmManager::Add3dObjectToDrawBuffer(VertexTex1DiffuseXyz *vertices)
+{
+    this->vertexBuffer3dEndPtr[0] = (vertices[0]);
+    this->vertexBuffer3dEndPtr[1] = (vertices[1]);
+    this->vertexBuffer3dEndPtr[2] = (vertices[2]);
+    this->vertexBuffer3dEndPtr[3] = (vertices[2]);
+    this->vertexBuffer3dEndPtr[4] = (vertices[1]);
+    this->vertexBuffer3dEndPtr[5] = (vertices[3]);
+
+    this->vertexBuffer3dEndPtr += 6;
+    this->objectsToDraw++;
 
     return ZUN_SUCCESS;
 }
@@ -1148,7 +1156,7 @@ ZunResult AnmManager::DrawFacingCamera(AnmVm *vm)
 
 ZunResult AnmManager::Draw3(AnmVm *vm)
 {
-    /*ZunMatrix worldTransformMatrix;
+    ZunMatrix worldTransformMatrix;
     ZunMatrix rotationMatrix;
     ZunMatrix textureMatrix;
     f32 scaledXCenter;
@@ -1167,35 +1175,26 @@ ZunResult AnmManager::Draw3(AnmVm *vm)
         return ZUN_ERROR;
     }
 
-    SetProjectionMode(PROJECTION_MODE_PERSPECTIVE);
+    //SetProjectionMode(PROJECTION_MODE_PERSPECTIVE);
 
     ZunMatrix originalView = this->dirtyTransformMatrices[MATRIX_VIEW];
 
     worldTransformMatrix = vm->matrix;
     worldTransformMatrix.m[0][0] *= vm->scaleX;
-    worldTransformMatrix.m[1][1] *= -vm->scaleY;
+    worldTransformMatrix.m[1][1] *= vm->scaleY;
 
     if (vm->rotation.x != 0.0)
     {
-        //        D3DXMatrixRotationX(&rotationMatrix, vm->rotation.x);
-        //        D3DXMatrixMultiply(&worldTransformMatrix, &worldTransformMatrix, &rotationMatrix);
-
         worldTransformMatrix.Rotate(vm->rotation.x, 1.0f, 0.0f, 0.0f);
     }
 
     if (vm->rotation.y != 0.0)
     {
-        //        D3DXMatrixRotationY(&rotationMatrix, vm->rotation.y);
-        //        D3DXMatrixMultiply(&worldTransformMatrix, &worldTransformMatrix, &rotationMatrix);
-
         worldTransformMatrix.Rotate(vm->rotation.y, 0.0f, 1.0f, 0.0f);
     }
 
     if (vm->rotation.z != 0.0)
     {
-        //        D3DXMatrixRotationZ(&rotationMatrix, vm->rotation.z);
-        //        D3DXMatrixMultiply(&worldTransformMatrix, &worldTransformMatrix, &rotationMatrix);
-
         worldTransformMatrix.Rotate(vm->rotation.z, 0.0f, 0.0f, 1.0f);
     }
 
@@ -1223,24 +1222,37 @@ ZunResult AnmManager::Draw3(AnmVm *vm)
 
     // Now, set transform matrix.
     ZunMatrix modelView = originalView * worldTransformMatrix;
-    this->SetTransformMatrix(MATRIX_VIEW, modelView);
-
+    //this->SetTransformMatrix(MATRIX_VIEW, modelView);
+    for(int i = 0; i < 4; i++)
+        g_PrimitivesToDrawUnknown[i].position = modelView * this->vertexBufferContents[i].position;
     // Load sprite if vm->sprite is not the same as current sprite.
     if (this->currentSprite != vm->sprite)
     {
         this->currentSprite = vm->sprite;
-        textureMatrix = vm->matrix;
+        /*textureMatrix = vm->matrix;
         textureMatrix.m[3][0] = vm->sprite->uvStart.x + vm->uvScrollPos.x;
-        textureMatrix.m[3][1] = vm->sprite->uvStart.y + vm->uvScrollPos.y;
-
-        this->SetTransformMatrix(MATRIX_TEXTURE, textureMatrix);
-
-        SetCurrentTexture(this->textures[vm->sprite->sourceFileIndex].handle);
+        textureMatrix.m[3][1] = vm->sprite->uvStart.y + vm->uvScrollPos.y;*/
+        g_PrimitivesToDrawUnknown[0].textureUV.x = g_PrimitivesToDrawUnknown[2].textureUV.x =
+            vm->sprite->uvStart.x + vm->uvScrollPos.x;
+        g_PrimitivesToDrawUnknown[1].textureUV.x = g_PrimitivesToDrawUnknown[3].textureUV.x =
+            vm->sprite->uvEnd.x + vm->uvScrollPos.x;
+        g_PrimitivesToDrawUnknown[0].textureUV.y = g_PrimitivesToDrawUnknown[1].textureUV.y =
+            vm->sprite->uvStart.y + vm->uvScrollPos.y;
+        g_PrimitivesToDrawUnknown[2].textureUV.y = g_PrimitivesToDrawUnknown[3].textureUV.y =
+            vm->sprite->uvEnd.y + vm->uvScrollPos.y;
+        
+        
+        //this->SetTransformMatrix(MATRIX_TEXTURE, textureMatrix);
+        GLuint newHandle = this->textures[vm->sprite->sourceFileIndex].handle;
+        if (this->currentTextureHandle != newHandle) {
+            this->FlushVertexBuffer();
+            this->SetCurrentTexture(newHandle);
+        }
     }
 
     //if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF) & 1) == 0)
     //{
-        this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
+    //    this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
     //}
     //else
     //{
@@ -1248,15 +1260,18 @@ ZunResult AnmManager::Draw3(AnmVm *vm)
     //}
 
     // Reset the render state based on the settings fo the given VM.
+
+    //this->SetProjectionMode(PROJECTION_MODE_PERSPECTIVE);
     this->SetRenderStateForVm(vm);
+    this->Add3dObjectToDrawBuffer(g_PrimitivesToDrawUnknown);
 
     // Draw the VM.
     //if ((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF & 1) == 0)
     //{
-        this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(*g_PrimitivesToDrawUnknown),
-                                  &g_PrimitivesToDrawUnknown[0].position);
-        this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(*g_PrimitivesToDrawUnknown),
-                                  &g_PrimitivesToDrawUnknown[0].textureUV);
+    //    this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(*g_PrimitivesToDrawUnknown),
+    //                              &g_PrimitivesToDrawUnknown[0].position);
+    //    this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(*g_PrimitivesToDrawUnknown),
+    //                              &g_PrimitivesToDrawUnknown[0].textureUV);
     //}
     //else
     //{
@@ -1268,9 +1283,10 @@ ZunResult AnmManager::Draw3(AnmVm *vm)
     //                              &g_PrimitivesToDrawUnknown[0].diffuse);
     //}
 
-    this->BackendDrawCall();
+    //this->SetTransformMatrix(MATRIX_VIEW, originalView);
 
-    this->SetTransformMatrix(MATRIX_VIEW, originalView);*/
+    //this->BackendDrawCall();
+
     return ZUN_SUCCESS;
 }
 

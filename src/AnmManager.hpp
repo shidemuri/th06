@@ -172,7 +172,12 @@ struct AnmManager
     VertexTex1Xyzrhw* vertexBufferEndPtr;
     VertexTex1Xyzrhw  vertexBuffer[0x18000];
 
-    //ZunResult AddSpriteToDrawBuffer(VertexTex1Xyzrhw *vertices);
+    u32 objectsToDraw;
+    VertexTex1DiffuseXyz* vertexBuffer3dStartPtr;
+    VertexTex1DiffuseXyz* vertexBuffer3dEndPtr;
+    VertexTex1DiffuseXyz  vertexBuffer3d[0x18000];
+
+    ZunResult Add3dObjectToDrawBuffer(VertexTex1DiffuseXyz *vertices);
     u32 renderStateChangesThisFrame;
     u32 flushesThisFrame;
     ZunResult AddSpriteToDrawBuffer(VertexTex1Xyzrhw *vertices);
