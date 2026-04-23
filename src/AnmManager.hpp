@@ -255,7 +255,6 @@ struct AnmManager
     void SetDepthMask(bool depthEnable)
     {
         this->dirtyDepthMask = depthEnable;
-
         if ((g_Supervisor.cfg.opts >> GCOS_TURN_OFF_DEPTH_TEST) & 1 || this->dirtyDepthMask == this->depthMask)
         {
             return;
@@ -323,9 +322,11 @@ struct AnmManager
 
     void SetFogRange(f32 nearPlane, f32 farPlane)
     {
+        this->FlushVertexBuffer();
         this->dirtyFogNear = nearPlane;
         this->dirtyFogFar = farPlane;
         this->dirtyFlags |= (1 << DIRTY_FOG);
+        this->FlushVertexBuffer();
     }
 
     void SetFogColor(ZunColor color)

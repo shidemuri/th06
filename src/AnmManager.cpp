@@ -943,15 +943,19 @@ void AnmManager::FlushVertexBuffer()
         this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
         this->SetProjectionMode(PROJECTION_MODE_PERSPECTIVE);
 
+        ZunMatrix originalView = this->dirtyTransformMatrices[MATRIX_VIEW];
         ZunMatrix identity;
         identity.Identity();
-        gfxBackend->SetTransformMatrix(MATRIX_VIEW, identity);
+        this->SetTransformMatrix(MATRIX_VIEW, identity);
         this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(VertexTex1DiffuseXyz),
                             &this->vertexBuffer3dStartPtr->position);
         this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(VertexTex1DiffuseXyz),
                                   &this->vertexBuffer3dStartPtr->textureUV);
         if(this->dirtyFlags != 0) this->UpdateDirtyStates();
         g_glFuncTable.glDrawArrays(GL_TRIANGLES, 0, this->objectsToDraw * 6);
+        this->SetTransformMatrix(MATRIX_VIEW, originalView);
+        if(this->dirtyFlags != 0) this->UpdateDirtyStates();
+        
     }
 
     /*g_Supervisor.d3dDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
@@ -1181,7 +1185,7 @@ ZunResult AnmManager::Draw3(AnmVm *vm)
 
     worldTransformMatrix = vm->matrix;
     worldTransformMatrix.m[0][0] *= vm->scaleX;
-    worldTransformMatrix.m[1][1] *= vm->scaleY;
+    worldTransformMatrix.m[1][1] *= -vm->scaleY;
 
     if (vm->rotation.x != 0.0)
     {
