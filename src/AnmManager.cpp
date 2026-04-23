@@ -945,7 +945,7 @@ void AnmManager::FlushVertexBuffer()
 
         ZunMatrix identity;
         identity.Identity();
-        this->SetTransformMatrix(MATRIX_VIEW, identity);
+        gfxBackend->SetTransformMatrix(MATRIX_VIEW, identity);
         this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(VertexTex1DiffuseXyz),
                             &this->vertexBuffer3dStartPtr->position);
         this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(VertexTex1DiffuseXyz),
@@ -1292,7 +1292,7 @@ ZunResult AnmManager::Draw3(AnmVm *vm)
 
 ZunResult AnmManager::Draw2(AnmVm *vm)
 {
-    /*ZunMatrix worldTransformMatrix;
+    ZunMatrix worldTransformMatrix;
     ZunMatrix unusedMatrix;
     ZunMatrix textureMatrix;
 
@@ -1315,7 +1315,7 @@ ZunResult AnmManager::Draw2(AnmVm *vm)
         return ZUN_ERROR;
     }
 
-    SetProjectionMode(PROJECTION_MODE_PERSPECTIVE);
+    //SetProjectionMode(PROJECTION_MODE_PERSPECTIVE);
 
     worldTransformMatrix = vm->matrix;
     worldTransformMatrix.m[3][0] = rintf(vm->pos.x) - 0.5f;
@@ -1334,28 +1334,32 @@ ZunResult AnmManager::Draw2(AnmVm *vm)
 
     ZunMatrix originalView = this->dirtyTransformMatrices[MATRIX_VIEW];
     ZunMatrix modelView = originalView * worldTransformMatrix;
-    this->SetTransformMatrix(MATRIX_VIEW, modelView);
-
+    //this->SetTransformMatrix(MATRIX_VIEW, modelView);
+    for(int i = 0; i < 4; i++)
+        g_PrimitivesToDrawUnknown[i].position = modelView * this->vertexBufferContents[i].position;
+    
     if (this->currentSprite != vm->sprite)
     {
         this->currentSprite = vm->sprite;
-        textureMatrix = vm->matrix;
-        textureMatrix.m[3][0] = vm->sprite->uvStart.x + vm->uvScrollPos.x;
-        textureMatrix.m[3][1] = vm->sprite->uvStart.y + vm->uvScrollPos.y;
+        g_PrimitivesToDrawUnknown[0].textureUV.x = g_PrimitivesToDrawUnknown[2].textureUV.x =
+            vm->sprite->uvStart.x + vm->uvScrollPos.x;
+        g_PrimitivesToDrawUnknown[1].textureUV.x = g_PrimitivesToDrawUnknown[3].textureUV.x =
+            vm->sprite->uvEnd.x + vm->uvScrollPos.x;
+        g_PrimitivesToDrawUnknown[0].textureUV.y = g_PrimitivesToDrawUnknown[1].textureUV.y =
+            vm->sprite->uvStart.y + vm->uvScrollPos.y;
+        g_PrimitivesToDrawUnknown[2].textureUV.y = g_PrimitivesToDrawUnknown[3].textureUV.y =
+            vm->sprite->uvEnd.y + vm->uvScrollPos.y;
 
-        this->SetTransformMatrix(MATRIX_TEXTURE, textureMatrix);
-
-        //        if (this->currentTextureHandle != this->textures[vm->sprite->sourceFileIndex].handle)
-        //        {
-        //            this->currentTexture = this->textures[vm->sprite->sourceFileIndex];
-        //            g_Supervisor.d3dDevice->SetTexture(0, this->currentTexture);
-        //        }
-
-        SetCurrentTexture(this->textures[vm->sprite->sourceFileIndex].handle);
+        GLuint newHandle = this->textures[vm->sprite->sourceFileIndex].handle;
+        if (this->currentTextureHandle != newHandle) {
+            this->FlushVertexBuffer();
+            this->SetCurrentTexture(newHandle);
+        }
+        //SetCurrentTexture(this->textures[vm->sprite->sourceFileIndex].handle);
 
         //if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF) & 1) == 0)
         //{
-            this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
+        //    this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
         //}
         //else
         //{
@@ -1364,13 +1368,13 @@ ZunResult AnmManager::Draw2(AnmVm *vm)
     }
 
     this->SetRenderStateForVm(vm);
-
+    this->Add3dObjectToDrawBuffer(g_PrimitivesToDrawUnknown);
     //if ((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF & 1) == 0)
     //{
-        this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(*g_PrimitivesToDrawUnknown),
-                                  &g_PrimitivesToDrawUnknown[0].position);
-        this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(*g_PrimitivesToDrawUnknown),
-                                  &g_PrimitivesToDrawUnknown[0].textureUV);
+    //    this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(*g_PrimitivesToDrawUnknown),
+    //                              &g_PrimitivesToDrawUnknown[0].position);
+    //    this->SetAttributePointer(VERTEX_ARRAY_TEX_COORD, sizeof(*g_PrimitivesToDrawUnknown),
+    //                              &g_PrimitivesToDrawUnknown[0].textureUV);
 
         //        g_Supervisor.d3dDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
     //}
@@ -1386,9 +1390,9 @@ ZunResult AnmManager::Draw2(AnmVm *vm)
     //    //        g_Supervisor.d3dDevice->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, , 0x18);
     //}
 
-    this->BackendDrawCall();
+    //this->BackendDrawCall();
 
-    this->SetTransformMatrix(MATRIX_VIEW, originalView);*/
+    //this->SetTransformMatrix(MATRIX_VIEW, originalView);
 
     return ZUN_SUCCESS;
 }
