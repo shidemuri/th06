@@ -159,13 +159,13 @@ void AnmManager::ReleaseSurfaces(void)
             SDL_FreeSurface(this->surfaces[idx]);
             this->surfaces[idx] = NULL;
         }
-        if (this->surfacesTextureCache[idx] != 0) {
-            if (this->currentTextureHandle == this->surfacesTextureCache[idx])
+        if (this->surfacesCache[idx] != 0) {
+            if (this->currentTextureHandle == this->surfacesCache[idx])
             {
                 this->currentTextureHandle = 0;
             }
-            g_glFuncTable.glDeleteTextures(1, &this->surfacesTextureCache[idx]);
-            this->surfacesTextureCache[idx] = 0;
+            g_glFuncTable.glDeleteTextures(1, &this->surfacesCache[idx]);
+            this->surfacesCache[idx] = 0;
         }
     }
 }
