@@ -170,6 +170,22 @@ struct AnmManager
     ~AnmManager();
 
     //    void ReleaseVertexBuffer();
+    u32 spritesToDraw;
+    VertexTex1Xyzrhw* vertexBufferStartPtr;
+    VertexTex1Xyzrhw* vertexBufferEndPtr;
+    VertexTex1Xyzrhw  vertexBuffer[0x18000];
+
+    u32 objectsToDraw;
+    VertexTex1DiffuseXyz* vertexBuffer3dStartPtr;
+    VertexTex1DiffuseXyz* vertexBuffer3dEndPtr;
+    VertexTex1DiffuseXyz  vertexBuffer3d[0x18000];
+
+    ZunResult Add3dObjectToDrawBuffer(VertexTex1DiffuseXyz *vertices);
+    u32 renderStateChangesThisFrame;
+    u32 flushesThisFrame;
+    ZunResult AddSpriteToDrawBuffer(VertexTex1Xyzrhw *vertices);
+    void FlushVertexBuffer();
+    void ClearVertexBuffer();
     void SetupVertexBuffer();
 
     ZunResult CreateEmptyTexture(i32 textureIdx, u32 width, u32 height, i32 textureFormat);
@@ -200,6 +216,7 @@ struct AnmManager
         }
 
         g_glFuncTable.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        //g_glFuncTable.glDrawArrays(GL_TRIANGLES, 0, this->spritesToDraw * 6);
     }
 
     // We need to do checks in these because they're called nearly every ANM draw call and otherwise
@@ -241,7 +258,6 @@ struct AnmManager
     void SetDepthMask(bool depthEnable)
     {
         this->dirtyDepthMask = depthEnable;
-
         if ((g_Supervisor.cfg.opts >> GCOS_TURN_OFF_DEPTH_TEST) & 1 || this->dirtyDepthMask == this->depthMask)
         {
             return;
@@ -309,9 +325,11 @@ struct AnmManager
 
     void SetFogRange(f32 nearPlane, f32 farPlane)
     {
+        this->FlushVertexBuffer();
         this->dirtyFogNear = nearPlane;
         this->dirtyFogFar = farPlane;
         this->dirtyFlags |= (1 << DIRTY_FOG);
+        this->FlushVertexBuffer();
     }
 
     void SetFogColor(ZunColor color)
@@ -411,6 +429,7 @@ struct AnmManager
     static SDL_Surface *LoadToSurfaceWithFormat(const char *filename, SDL_PixelFormatEnum format, u8 **fileData);
     static u8 *ExtractSurfacePixels(SDL_Surface *src, u8 pixelDepth);
     static void FlipSurface(SDL_Surface *surface);
+    void ApplySurfaceToColorBuffer(i32 src, const SDL_Rect &srcRect, const SDL_Rect &dstRect);
     void ApplySurfaceToColorBuffer(i32 src, const SDL_Rect &srcRect, const SDL_Rect &dstRect);
     // Creates, binds, and set parameters for a new texture
     void CreateTextureObject();

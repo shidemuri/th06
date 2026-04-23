@@ -229,6 +229,7 @@ void AsciiManager::DrawStrings(void)
         this->vm0.scaleX = string->scale.x;
         this->vm0.scaleY = string->scale.y;
         charWidth = 14 * string->scale.x;
+        g_AnmManager->FlushVertexBuffer();
         if (guiString != string->isGui)
         {
             guiString = string->isGui;
