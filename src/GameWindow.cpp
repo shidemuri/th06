@@ -50,6 +50,7 @@ RenderResult GameWindow::Render()
         {
             if (g_Supervisor.RedrawWholeFrame())
             {
+                g_AnmManager->FlushVertexBuffer();
                 viewport.x = 0;
                 viewport.y = 0;
                 viewport.width = GAME_WINDOW_WIDTH;
@@ -67,7 +68,7 @@ RenderResult GameWindow::Render()
 
             g_AnmManager->ClearVertexBuffer();
             g_Chain.RunDrawChain();
-            //g_AnmManager->FlushVertexBuffer();
+            g_AnmManager->FlushVertexBuffer();
             g_AnmManager->SetCurrentTexture(0);
         }
 
@@ -175,6 +176,7 @@ void GameWindow::Present()
         g_Supervisor.unk198--;
     }
 
+    g_AnmManager->FlushVertexBuffer();
     SDL_GL_SwapWindow(g_GameWindow.window);
 
     return;

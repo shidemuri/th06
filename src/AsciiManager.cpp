@@ -229,10 +229,10 @@ void AsciiManager::DrawStrings(void)
         this->vm0.scaleX = string->scale.x;
         this->vm0.scaleY = string->scale.y;
         charWidth = 14 * string->scale.x;
-        g_AnmManager->FlushVertexBuffer();
         if (guiString != string->isGui)
         {
             guiString = string->isGui;
+            g_AnmManager->FlushVertexBuffer();
             if (guiString)
             {
                 g_Supervisor.viewport.x = g_GameManager.arcadeRegionTopLeftPos.x;
@@ -248,6 +248,7 @@ void AsciiManager::DrawStrings(void)
                 g_Supervisor.viewport.height = GAME_WINDOW_HEIGHT;
             }
 
+            g_AnmManager->FlushVertexBuffer();
             g_AnmManager->SetProjectionMode(PROJECTION_MODE_PERSPECTIVE);
             g_Supervisor.viewport.Set();
         }

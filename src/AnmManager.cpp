@@ -697,9 +697,13 @@ void AnmManager::SetAndExecuteScript(AnmVm *vm, AnmRawInstr *beginingOfScript)
 
 void AnmManager::SetRenderStateForVm(AnmVm *vm)
 {
+    bool bruh = false;
+    if (this->dirtytTextureFactor != vm->color) bruh = true;
+    if (this->currentBlendMode != vm->flags.blendMode) bruh = true;
+    if(bruh) this->FlushVertexBuffer();
     if (this->currentBlendMode != vm->flags.blendMode)
     {
-        this->FlushVertexBuffer();
+        bruh = true;
         this->currentBlendMode = vm->flags.blendMode;
         if (this->currentBlendMode == AnmVmBlendMode_InvSrcAlpha)
         {
@@ -883,8 +887,8 @@ ZunResult AnmManager::DrawOrthographic(AnmVm *vm, bool roundToPixel)
         GLuint newHandle = this->textures[vm->sprite->sourceFileIndex].handle;
         if (this->currentTextureHandle != newHandle) {
             this->FlushVertexBuffer();
-            this->SetCurrentTexture(newHandle);
         }
+        this->SetCurrentTexture(newHandle);
     }
 
     this->SetRenderStateForVm(vm);
@@ -1250,8 +1254,8 @@ ZunResult AnmManager::Draw3(AnmVm *vm)
         GLuint newHandle = this->textures[vm->sprite->sourceFileIndex].handle;
         if (this->currentTextureHandle != newHandle) {
             this->FlushVertexBuffer();
-            this->SetCurrentTexture(newHandle);
         }
+        this->SetCurrentTexture(newHandle);
     }
 
     //if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF) & 1) == 0)
@@ -1357,8 +1361,8 @@ ZunResult AnmManager::Draw2(AnmVm *vm)
         GLuint newHandle = this->textures[vm->sprite->sourceFileIndex].handle;
         if (this->currentTextureHandle != newHandle) {
             this->FlushVertexBuffer();
-            this->SetCurrentTexture(newHandle);
         }
+        this->SetCurrentTexture(newHandle);
         //SetCurrentTexture(this->textures[vm->sprite->sourceFileIndex].handle);
 
         //if (((g_Supervisor.cfg.opts >> GCOS_DONT_USE_VERTEX_BUF) & 1) == 0)
