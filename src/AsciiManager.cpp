@@ -61,7 +61,6 @@ ChainCallbackResult AsciiManager::OnUpdate(AsciiManager *mgr)
 ChainCallbackResult AsciiManager::OnDrawMenus(AsciiManager *mgr)
 {
     mgr->DrawStrings();
-    g_AnmManager->FlushVertexBuffer();
     mgr->numStrings = 0;
     mgr->gameMenu.OnDrawGameMenu();
     mgr->retryMenu.OnDrawRetryMenu();
@@ -233,7 +232,6 @@ void AsciiManager::DrawStrings(void)
         if (guiString != string->isGui)
         {
             guiString = string->isGui;
-            g_AnmManager->FlushVertexBuffer();
             if (guiString)
             {
                 g_Supervisor.viewport.x = g_GameManager.arcadeRegionTopLeftPos.x;
@@ -281,6 +279,7 @@ void AsciiManager::DrawStrings(void)
             text++;
         }
     }
+    g_AnmManager->FlushVertexBuffer();
 }
 
 void AsciiManager::CreatePopup1(ZunVec3 *position, i32 value, ZunColor color)
@@ -595,6 +594,7 @@ void StageMenu::OnDrawGameMenu()
 
     if (g_GameManager.isInGameMenu)
     {
+        //g_AnmManager->FlushVertexBuffer();
         g_Supervisor.viewport.x = g_GameManager.arcadeRegionTopLeftPos.x;
         g_Supervisor.viewport.y = g_GameManager.arcadeRegionTopLeftPos.y;
         g_Supervisor.viewport.width = g_GameManager.arcadeRegionSize.x;
@@ -807,6 +807,7 @@ void StageMenu::OnDrawRetryMenu()
 
     if (g_GameManager.isInRetryMenu)
     {
+        //g_AnmManager->FlushVertexBuffer();
         g_Supervisor.viewport.x = g_GameManager.arcadeRegionTopLeftPos.x;
         g_Supervisor.viewport.y = g_GameManager.arcadeRegionTopLeftPos.y;
         g_Supervisor.viewport.width = g_GameManager.arcadeRegionSize.x;
@@ -845,6 +846,7 @@ void AsciiManager::DrawPopupsWithHwVertexProcessing()
     i32 i;
     i32 j;
 
+    g_AnmManager->FlushVertexBuffer();
     currentPopup = this->popups;
     g_Supervisor.viewport.x = g_GameManager.arcadeRegionTopLeftPos.x;
     g_Supervisor.viewport.y = g_GameManager.arcadeRegionTopLeftPos.y;
@@ -896,6 +898,7 @@ void AsciiManager::DrawPopupsWithoutHwVertexProcessing()
     i32 i;
     i32 j;
 
+    g_AnmManager->FlushVertexBuffer();
     currentPopup = this->popups;
     g_Supervisor.viewport.x = g_GameManager.arcadeRegionTopLeftPos.x;
     g_Supervisor.viewport.y = g_GameManager.arcadeRegionTopLeftPos.y;

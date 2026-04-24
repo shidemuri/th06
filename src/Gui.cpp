@@ -787,6 +787,7 @@ ZunResult GuiImpl::DrawDialogue()
         g_AnmManager->SetCurrentTexture(g_AnmManager->dummyTextureHandle);
     }
 
+    g_AnmManager->FlushVertexBuffer();
     g_AnmManager->SetProjectionMode(PROJECTION_MODE_ORTHOGRAPHIC);
 
     g_AnmManager->SetVertexAttributes(VERTEX_ATTR_DIFFUSE);
@@ -1060,6 +1061,7 @@ void Gui::DrawGameScene()
         g_AsciiManager.color = COLOR_WHITE;
         this->lastSpellcardSecondsRemaining = this->spellcardSecondsRemaining;
     }
+    //g_AnmManager->FlushVertexBuffer();
     g_Supervisor.viewport.x = 0;
     g_Supervisor.viewport.y = 0;
     g_Supervisor.viewport.width = GAME_WINDOW_WIDTH;
@@ -1208,6 +1210,7 @@ void Gui::DrawGameScene()
                 g_AnmManager->SetCurrentTexture(g_AnmManager->dummyTextureHandle);
             }
 
+            //g_AnmManager->FlushVertexBuffer();
             g_AnmManager->SetProjectionMode(PROJECTION_MODE_ORTHOGRAPHIC);
 
             g_AnmManager->SetVertexAttributes(VERTEX_ATTR_DIFFUSE);
@@ -1358,6 +1361,7 @@ void Gui::DrawStageElements()
     }
     if (this->impl->loadingScreenSprite.activeSpriteIndex >= 0)
     {
+        //g_AnmManager->FlushVertexBuffer();
         g_Supervisor.viewport.x = g_GameManager.arcadeRegionTopLeftPos.x;
         g_Supervisor.viewport.y = g_GameManager.arcadeRegionTopLeftPos.y;
 

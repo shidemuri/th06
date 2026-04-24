@@ -326,7 +326,6 @@ struct AnmManager
         this->dirtyFogNear = nearPlane;
         this->dirtyFogFar = farPlane;
         this->dirtyFlags |= (1 << DIRTY_FOG);
-        this->FlushVertexBuffer();
     }
 
     void SetFogColor(ZunColor color)

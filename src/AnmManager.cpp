@@ -700,7 +700,7 @@ void AnmManager::SetRenderStateForVm(AnmVm *vm)
     bool bruh = false;
     if (this->dirtytTextureFactor != vm->color) bruh = true;
     if (this->currentBlendMode != vm->flags.blendMode) bruh = true;
-    //if (!((g_Supervisor.cfg.opts >> GCOS_TURN_OFF_DEPTH_TEST) & 1) && this->dirtyDepthMask != this->depthMask) bruh = true;
+    if (this->depthMask != (!vm->flags.zWriteDisable)) bruh = true;
     if(bruh) this->FlushVertexBuffer();
     if (this->currentBlendMode != vm->flags.blendMode)
     {
@@ -949,11 +949,10 @@ void AnmManager::FlushVertexBuffer()
     }
 
     if (this->spritesToDraw > 0) {
-        utils::DebugPrint2("Flushing 2d vertex buffer: %d sprites", this->spritesToDraw);
+        //utils::DebugPrint2("Flushing 2d vertex buffer: %d sprites", this->spritesToDraw);
 
         this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
         this->SetProjectionMode(PROJECTION_MODE_ORTHOGRAPHIC);
-
 
         this->SetAttributePointer(VERTEX_ARRAY_POSITION, sizeof(VertexTex1Xyzrhw),
                                     &this->vertexBufferStartPtr->position);
@@ -965,7 +964,7 @@ void AnmManager::FlushVertexBuffer()
     }
 
     if (this->objectsToDraw > 0) {
-        utils::DebugPrint2("Flushing 3d vertex buffer: %d objects", this->objectsToDraw);
+        //utils::DebugPrint2("Flushing 3d vertex buffer: %d objects", this->objectsToDraw);
 
         this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
         this->SetProjectionMode(PROJECTION_MODE_PERSPECTIVE);
@@ -1257,20 +1256,21 @@ ZunResult AnmManager::Draw3(AnmVm *vm)
     for(int i = 0; i < 4; i++)
         g_PrimitivesToDrawUnknown[i].position = modelView * this->vertexBufferContents[i].position;
     // Load sprite if vm->sprite is not the same as current sprite.
+
+    g_PrimitivesToDrawUnknown[0].textureUV.x = g_PrimitivesToDrawUnknown[2].textureUV.x =
+        vm->sprite->uvStart.x + vm->uvScrollPos.x;
+    g_PrimitivesToDrawUnknown[1].textureUV.x = g_PrimitivesToDrawUnknown[3].textureUV.x =
+        vm->sprite->uvEnd.x + vm->uvScrollPos.x;
+    g_PrimitivesToDrawUnknown[0].textureUV.y = g_PrimitivesToDrawUnknown[1].textureUV.y =
+        vm->sprite->uvStart.y + vm->uvScrollPos.y;
+    g_PrimitivesToDrawUnknown[2].textureUV.y = g_PrimitivesToDrawUnknown[3].textureUV.y =
+        vm->sprite->uvEnd.y + vm->uvScrollPos.y;
     if (this->currentSprite != vm->sprite)
     {
         this->currentSprite = vm->sprite;
         /*textureMatrix = vm->matrix;
         textureMatrix.m[3][0] = vm->sprite->uvStart.x + vm->uvScrollPos.x;
         textureMatrix.m[3][1] = vm->sprite->uvStart.y + vm->uvScrollPos.y;*/
-        g_PrimitivesToDrawUnknown[0].textureUV.x = g_PrimitivesToDrawUnknown[2].textureUV.x =
-            vm->sprite->uvStart.x + vm->uvScrollPos.x;
-        g_PrimitivesToDrawUnknown[1].textureUV.x = g_PrimitivesToDrawUnknown[3].textureUV.x =
-            vm->sprite->uvEnd.x + vm->uvScrollPos.x;
-        g_PrimitivesToDrawUnknown[0].textureUV.y = g_PrimitivesToDrawUnknown[1].textureUV.y =
-            vm->sprite->uvStart.y + vm->uvScrollPos.y;
-        g_PrimitivesToDrawUnknown[2].textureUV.y = g_PrimitivesToDrawUnknown[3].textureUV.y =
-            vm->sprite->uvEnd.y + vm->uvScrollPos.y;
         
         
         //this->SetTransformMatrix(MATRIX_TEXTURE, textureMatrix);
@@ -1369,17 +1369,19 @@ ZunResult AnmManager::Draw2(AnmVm *vm)
     for(int i = 0; i < 4; i++)
         g_PrimitivesToDrawUnknown[i].position = modelView * this->vertexBufferContents[i].position;
     
+
+    g_PrimitivesToDrawUnknown[0].textureUV.x = g_PrimitivesToDrawUnknown[2].textureUV.x =
+        vm->sprite->uvStart.x + vm->uvScrollPos.x;
+    g_PrimitivesToDrawUnknown[1].textureUV.x = g_PrimitivesToDrawUnknown[3].textureUV.x =
+        vm->sprite->uvEnd.x + vm->uvScrollPos.x;
+    g_PrimitivesToDrawUnknown[0].textureUV.y = g_PrimitivesToDrawUnknown[1].textureUV.y =
+        vm->sprite->uvStart.y + vm->uvScrollPos.y;
+    g_PrimitivesToDrawUnknown[2].textureUV.y = g_PrimitivesToDrawUnknown[3].textureUV.y =
+        vm->sprite->uvEnd.y + vm->uvScrollPos.y;
+    
     if (this->currentSprite != vm->sprite)
     {
         this->currentSprite = vm->sprite;
-        g_PrimitivesToDrawUnknown[0].textureUV.x = g_PrimitivesToDrawUnknown[2].textureUV.x =
-            vm->sprite->uvStart.x + vm->uvScrollPos.x;
-        g_PrimitivesToDrawUnknown[1].textureUV.x = g_PrimitivesToDrawUnknown[3].textureUV.x =
-            vm->sprite->uvEnd.x + vm->uvScrollPos.x;
-        g_PrimitivesToDrawUnknown[0].textureUV.y = g_PrimitivesToDrawUnknown[1].textureUV.y =
-            vm->sprite->uvStart.y + vm->uvScrollPos.y;
-        g_PrimitivesToDrawUnknown[2].textureUV.y = g_PrimitivesToDrawUnknown[3].textureUV.y =
-            vm->sprite->uvEnd.y + vm->uvScrollPos.y;
 
         GLuint newHandle = this->textures[vm->sprite->sourceFileIndex].handle;
         if (this->currentTextureHandle != newHandle) {

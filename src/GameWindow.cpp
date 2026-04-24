@@ -67,10 +67,10 @@ RenderResult GameWindow::Render()
 
             g_AnmManager->ClearVertexBuffer();
             g_Chain.RunDrawChain();
-            g_AnmManager->FlushVertexBuffer();
             g_AnmManager->SetCurrentTexture(0);
         }
 
+        g_AnmManager->FlushVertexBuffer();
         g_Supervisor.viewport.x = 0;
         g_Supervisor.viewport.y = 0;
         g_Supervisor.viewport.width = GAME_WINDOW_WIDTH;
