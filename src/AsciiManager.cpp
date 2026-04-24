@@ -61,6 +61,7 @@ ChainCallbackResult AsciiManager::OnUpdate(AsciiManager *mgr)
 ChainCallbackResult AsciiManager::OnDrawMenus(AsciiManager *mgr)
 {
     mgr->DrawStrings();
+    g_AnmManager->FlushVertexBuffer();
     mgr->numStrings = 0;
     mgr->gameMenu.OnDrawGameMenu();
     mgr->retryMenu.OnDrawRetryMenu();
@@ -248,7 +249,6 @@ void AsciiManager::DrawStrings(void)
                 g_Supervisor.viewport.height = GAME_WINDOW_HEIGHT;
             }
 
-            g_AnmManager->FlushVertexBuffer();
             g_AnmManager->SetProjectionMode(PROJECTION_MODE_PERSPECTIVE);
             g_Supervisor.viewport.Set();
         }
