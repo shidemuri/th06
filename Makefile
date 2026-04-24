@@ -33,7 +33,7 @@ include $(DEVKITARM)/3ds_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	src src/pbg3 src/midi src/graphics
+SOURCES		:=	src src/pbg3 src/midi src/graphics src/thirdparty
 DATA		:=	data
 INCLUDES	:=	include
 GRAPHICS	:=	gfx
