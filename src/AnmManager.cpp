@@ -189,6 +189,10 @@ AnmManager::~AnmManager()
         this->dummyTextureHandle = 0;
     }
 
+    if(this->vertexBuffer != NULL) linearFree(this->vertexBuffer);
+    if(this->vertexBuffer3d != NULL) linearFree(this->vertexBuffer3d);
+    
+
     IMG_Quit();
 }
 
@@ -208,6 +212,9 @@ AnmManager::AnmManager()
     this->maybeLoadedSpriteCount = 0;
 
     std::memset(this, 0, sizeof(AnmManager));
+    this->vertexBuffer = (VertexTex1Xyzrhw*)linearAlloc(0x18000 * sizeof(VertexTex1Xyzrhw));
+    this->vertexBuffer3d = (VertexTex1DiffuseXyz*)linearAlloc(0x18000 * sizeof(VertexTex1DiffuseXyz));
+    
     this->ClearVertexBuffer();
 
     for (i32 spriteIndex = 0; spriteIndex < ARRAY_SIZE_SIGNED(this->sprites); spriteIndex++)
@@ -936,7 +943,7 @@ void AnmManager::FlushVertexBuffer()
     }
 
     if (this->spritesToDraw > 0) {
-        utils::DebugPrint2("Flushing 2d vertex buffer: %d sprites", this->spritesToDraw);
+        //utils::DebugPrint2("Flushing 2d vertex buffer: %d sprites", this->spritesToDraw);
 
         this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
         this->SetProjectionMode(PROJECTION_MODE_ORTHOGRAPHIC);
@@ -952,7 +959,7 @@ void AnmManager::FlushVertexBuffer()
     }
 
     if (this->objectsToDraw > 0) {
-        utils::DebugPrint2("Flushing 3d vertex buffer: %d objects", this->objectsToDraw);
+        //utils::DebugPrint2("Flushing 3d vertex buffer: %d objects", this->objectsToDraw);
 
         this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
         this->SetProjectionMode(PROJECTION_MODE_PERSPECTIVE);

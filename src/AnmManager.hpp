@@ -173,12 +173,12 @@ struct AnmManager
     u32 spritesToDraw;
     VertexTex1Xyzrhw* vertexBufferStartPtr;
     VertexTex1Xyzrhw* vertexBufferEndPtr;
-    VertexTex1Xyzrhw  vertexBuffer[0x18000];
+    VertexTex1Xyzrhw*  vertexBuffer;
 
     u32 objectsToDraw;
     VertexTex1DiffuseXyz* vertexBuffer3dStartPtr;
     VertexTex1DiffuseXyz* vertexBuffer3dEndPtr;
-    VertexTex1DiffuseXyz  vertexBuffer3d[0x18000];
+    VertexTex1DiffuseXyz*  vertexBuffer3d;
 
     ZunResult Add3dObjectToDrawBuffer(VertexTex1DiffuseXyz *vertices);
     u32 renderStateChangesThisFrame;
