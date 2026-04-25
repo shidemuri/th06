@@ -1061,7 +1061,6 @@ void Gui::DrawGameScene()
         g_AsciiManager.color = COLOR_WHITE;
         this->lastSpellcardSecondsRemaining = this->spellcardSecondsRemaining;
     }
-    //g_AnmManager->FlushVertexBuffer();
     g_Supervisor.viewport.x = 0;
     g_Supervisor.viewport.y = 0;
     g_Supervisor.viewport.width = GAME_WINDOW_WIDTH;
@@ -1210,7 +1209,6 @@ void Gui::DrawGameScene()
                 g_AnmManager->SetCurrentTexture(g_AnmManager->dummyTextureHandle);
             }
 
-            //g_AnmManager->FlushVertexBuffer();
             g_AnmManager->SetProjectionMode(PROJECTION_MODE_ORTHOGRAPHIC);
 
             g_AnmManager->SetVertexAttributes(VERTEX_ATTR_DIFFUSE);
@@ -1373,6 +1371,7 @@ void Gui::DrawStageElements()
         //        g_Supervisor.d3dDevice->SetViewport(&g_Supervisor.viewport);
         g_AnmManager->DrawNoRotation(&this->impl->loadingScreenSprite);
     }
+    g_AnmManager->FlushVertexBuffer();
 }
 
 ZunResult Gui::AddedCallback(Gui *gui)

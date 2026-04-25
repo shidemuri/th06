@@ -697,14 +697,11 @@ void AnmManager::SetAndExecuteScript(AnmVm *vm, AnmRawInstr *beginingOfScript)
 
 void AnmManager::SetRenderStateForVm(AnmVm *vm)
 {
-    bool bruh = false;
-    if (this->dirtytTextureFactor != vm->color) bruh = true;
-    if (this->currentBlendMode != vm->flags.blendMode) bruh = true;
-    if (this->depthMask != (!vm->flags.zWriteDisable)) bruh = true;
-    if(bruh) this->FlushVertexBuffer();
+    if (this->dirtytTextureFactor != vm->color ||
+        this->currentBlendMode != vm->flags.blendMode ||
+        this->dirtyDepthMask != (!vm->flags.zWriteDisable)) this->FlushVertexBuffer();
     if (this->currentBlendMode != vm->flags.blendMode)
     {
-        bruh = true;
         this->currentBlendMode = vm->flags.blendMode;
         if (this->currentBlendMode == AnmVmBlendMode_InvSrcAlpha)
         {
@@ -980,7 +977,6 @@ void AnmManager::FlushVertexBuffer()
         if(this->dirtyFlags != 0) this->UpdateDirtyStates();
         g_glFuncTable.glDrawArrays(GL_TRIANGLES, 0, this->objectsToDraw * 6);
         this->SetTransformMatrix(MATRIX_VIEW, originalView);
-        if(this->dirtyFlags != 0) this->UpdateDirtyStates();
         
     }
 

@@ -247,6 +247,7 @@ void AsciiManager::DrawStrings(void)
                 g_Supervisor.viewport.height = GAME_WINDOW_HEIGHT;
             }
 
+            g_AnmManager->FlushVertexBuffer();
             g_AnmManager->SetProjectionMode(PROJECTION_MODE_PERSPECTIVE);
             g_Supervisor.viewport.Set();
         }
@@ -279,7 +280,6 @@ void AsciiManager::DrawStrings(void)
             text++;
         }
     }
-    g_AnmManager->FlushVertexBuffer();
 }
 
 void AsciiManager::CreatePopup1(ZunVec3 *position, i32 value, ZunColor color)
@@ -594,7 +594,6 @@ void StageMenu::OnDrawGameMenu()
 
     if (g_GameManager.isInGameMenu)
     {
-        //g_AnmManager->FlushVertexBuffer();
         g_Supervisor.viewport.x = g_GameManager.arcadeRegionTopLeftPos.x;
         g_Supervisor.viewport.y = g_GameManager.arcadeRegionTopLeftPos.y;
         g_Supervisor.viewport.width = g_GameManager.arcadeRegionSize.x;
@@ -615,6 +614,7 @@ void StageMenu::OnDrawGameMenu()
             }
         }
     }
+    g_AnmManager->FlushVertexBuffer();
     return;
 }
 
