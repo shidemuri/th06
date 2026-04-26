@@ -410,7 +410,7 @@ ZunResult AnmManager::LoadTextureAlphaChannel(i32 textureIdx, char *textureName,
     if (textureDesc->format != TEX_FMT_A8R8G8B8 && textureDesc->format != TEX_FMT_A4R4G4B4 &&
         textureDesc->format != TEX_FMT_A1R5G5B5)
     {
-        GameErrorContext::Fatal(&g_GameErrorContext, TH_ERR_ANMMANAGER_UNK_TEX_FORMAT);
+        g_GameErrorContext.Fatal(TH_ERR_ANMMANAGER_UNK_TEX_FORMAT);
         return ZUN_ERROR;
     }
 
@@ -510,7 +510,7 @@ ZunResult AnmManager::LoadAnm(i32 anmIdx, const char *path, i32 spriteIdxOffset)
 
     if (anm == NULL)
     {
-        GameErrorContext::Fatal(&g_GameErrorContext, TH_ERR_ANMMANAGER_SPRITE_CORRUPTED, path);
+        g_GameErrorContext.Fatal(TH_ERR_ANMMANAGER_SPRITE_CORRUPTED, path);
         return ZUN_ERROR;
     }
 
@@ -531,7 +531,7 @@ ZunResult AnmManager::LoadAnm(i32 anmIdx, const char *path, i32 spriteIdxOffset)
     }
     else if (this->LoadTexture(anm->textureIdx, anmName, anm->format, anm->colorKey) != ZUN_SUCCESS)
     {
-        GameErrorContext::Fatal(&g_GameErrorContext, TH_ERR_ANMMANAGER_TEXTURE_CORRUPTED, anmName);
+        g_GameErrorContext.Fatal(TH_ERR_ANMMANAGER_TEXTURE_CORRUPTED, anmName);
         return ZUN_ERROR;
     }
 
@@ -540,7 +540,7 @@ ZunResult AnmManager::LoadAnm(i32 anmIdx, const char *path, i32 spriteIdxOffset)
         anmName = (char *)((u8 *)anm + anm->alphaNameOffset);
         if (this->LoadTextureAlphaChannel(anm->textureIdx, anmName, anm->format, anm->colorKey) != ZUN_SUCCESS)
         {
-            GameErrorContext::Fatal(&g_GameErrorContext, TH_ERR_ANMMANAGER_TEXTURE_CORRUPTED, anmName);
+            g_GameErrorContext.Fatal(TH_ERR_ANMMANAGER_TEXTURE_CORRUPTED, anmName);
             return ZUN_ERROR;
         }
     }
@@ -1797,7 +1797,8 @@ void AnmManager::DrawTextToSprite(u32 textureDstIdx, i32 xPos, i32 yPos, i32 spr
     return;
 }
 
-void AnmManager::DrawVmTextFmt(AnmManager *anmMgr, AnmVm *vm, ZunColor textColor, ZunColor shadowColor, char *fmt, ...)
+
+void AnmManager::DrawVmTextFmt(AnmVm *vm, ZunColor textColor, ZunColor shadowColor, char *fmt, ...)
 {
     u32 fontWidth;
     char buffer[64];
@@ -1807,14 +1808,14 @@ void AnmManager::DrawVmTextFmt(AnmManager *anmMgr, AnmVm *vm, ZunColor textColor
     va_start(argptr, fmt);
     vsprintf(buffer, fmt, argptr);
     va_end(argptr);
-    anmMgr->DrawTextToSprite(vm->sprite->sourceFileIndex, vm->sprite->startPixelInclusive.x,
+    this->DrawTextToSprite(vm->sprite->sourceFileIndex, vm->sprite->startPixelInclusive.x,
                              vm->sprite->startPixelInclusive.y, vm->sprite->textureWidth, vm->sprite->textureHeight,
                              fontWidth, vm->fontHeight, textColor, shadowColor, buffer);
     vm->flags.isVisible = true;
     return;
 }
 
-void AnmManager::DrawStringFormat(AnmManager *mgr, AnmVm *vm, ZunColor textColor, ZunColor shadowColor, char *fmt, ...)
+void AnmManager::DrawStringFormat(AnmVm *vm, ZunColor textColor, ZunColor shadowColor, char *fmt, ...)
 {
     char buf[64];
     va_list args;
@@ -1825,19 +1826,19 @@ void AnmManager::DrawStringFormat(AnmManager *mgr, AnmVm *vm, ZunColor textColor
     va_start(args, fmt);
     vsprintf(buf, fmt, args);
     va_end(args);
-    mgr->DrawTextToSprite(vm->sprite->sourceFileIndex, vm->sprite->startPixelInclusive.x,
+    this->DrawTextToSprite(vm->sprite->sourceFileIndex, vm->sprite->startPixelInclusive.x,
                           vm->sprite->startPixelInclusive.y, vm->sprite->textureWidth, vm->sprite->textureHeight,
                           fontWidth, vm->fontHeight, textColor, shadowColor, " ");
     secondPartStartX =
         vm->sprite->startPixelInclusive.x + vm->sprite->textureWidth - ((f32)strlen(buf) * (f32)(fontWidth + 1) / 2.0f);
-    mgr->DrawTextToSprite(vm->sprite->sourceFileIndex, secondPartStartX, vm->sprite->startPixelInclusive.y,
+    this->DrawTextToSprite(vm->sprite->sourceFileIndex, secondPartStartX, vm->sprite->startPixelInclusive.y,
                           vm->sprite->textureWidth, vm->sprite->textureHeight, fontWidth, vm->fontHeight, textColor,
                           shadowColor, buf);
     vm->flags.isVisible = true;
     return;
 }
 
-void AnmManager::DrawStringFormat2(AnmManager *mgr, AnmVm *vm, ZunColor textColor, ZunColor shadowColor, char *fmt, ...)
+void AnmManager::DrawStringFormat2(AnmVm *vm, ZunColor textColor, ZunColor shadowColor, char *fmt, ...)
 {
     char buf[64];
     va_list args;
@@ -1848,12 +1849,12 @@ void AnmManager::DrawStringFormat2(AnmManager *mgr, AnmVm *vm, ZunColor textColo
     va_start(args, fmt);
     vsprintf(buf, fmt, args);
     va_end(args);
-    mgr->DrawTextToSprite(vm->sprite->sourceFileIndex, vm->sprite->startPixelInclusive.x,
+    this->DrawTextToSprite(vm->sprite->sourceFileIndex, vm->sprite->startPixelInclusive.x,
                           vm->sprite->startPixelInclusive.y, vm->sprite->textureWidth, vm->sprite->textureHeight,
                           fontWidth, vm->fontHeight, textColor, shadowColor, " ");
     secondPartStartX = vm->sprite->startPixelInclusive.x + vm->sprite->textureWidth / 2.0f -
                        ((f32)strlen(buf) * (f32)(fontWidth + 1) / 4.0f);
-    mgr->DrawTextToSprite(vm->sprite->sourceFileIndex, secondPartStartX, vm->sprite->startPixelInclusive.y,
+    this->DrawTextToSprite(vm->sprite->sourceFileIndex, secondPartStartX, vm->sprite->startPixelInclusive.y,
                           vm->sprite->textureWidth, vm->sprite->textureHeight, fontWidth, vm->fontHeight, textColor,
                           shadowColor, buf);
     vm->flags.isVisible = true;

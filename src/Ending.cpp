@@ -356,7 +356,7 @@ ZunResult Ending::ParseEndFile()
                 g_AnmManager->SetAndExecuteScriptIdx(&this->sprites[lineDisplayed + this->timesFileParsed * 2],
                                                      lineDisplayed + ANM_SCRIPT_TEXT_ENDING_TEXT +
                                                          this->timesFileParsed * 2);
-                AnmManager::DrawVmTextFmt(g_AnmManager, &this->sprites[lineDisplayed + this->timesFileParsed * 2],
+                g_AnmManager->DrawVmTextFmt(&this->sprites[lineDisplayed + this->timesFileParsed * 2],
                                           this->textColor, COLOR_END_TEXT_SHADOW, textBuffer);
             }
             while (this->endFileDataPtr[0] == '\n' || this->endFileDataPtr[0] == '\0' ||
@@ -392,7 +392,7 @@ ZunResult Ending::ParseEndFile()
                 g_AnmManager->SetAndExecuteScriptIdx(&this->sprites[lineDisplayed + this->timesFileParsed * 2],
                                                      lineDisplayed + ANM_SCRIPT_TEXT_ENDING_TEXT +
                                                          this->timesFileParsed * 2);
-                AnmManager::DrawVmTextFmt(g_AnmManager, &this->sprites[lineDisplayed + this->timesFileParsed * 2],
+                g_AnmManager->DrawVmTextFmt(&this->sprites[lineDisplayed + this->timesFileParsed * 2],
                                           this->textColor, COLOR_END_TEXT_SHADOW, textBuffer);
                 if (lineDisplayed)
                 {
@@ -430,7 +430,7 @@ ZunResult Ending::LoadEnding(char *endFilePath)
     this->endFileData = (char *)FileSystem::OpenPath(endFilePath, false);
     if (this->endFileData == NULL)
     {
-        GameErrorContext::Log(&g_GameErrorContext, TH_ERR_ENDING_END_FILE_CORRUPTED);
+        g_GameErrorContext.Log(TH_ERR_ENDING_END_FILE_CORRUPTED);
         return ZUN_ERROR;
     }
     else
