@@ -213,7 +213,6 @@ struct AnmManager
         }
 
         g_glFuncTable.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        //g_glFuncTable.glDrawArrays(GL_TRIANGLES, 0, this->spritesToDraw * 6);
     }
 
     // We need to do checks in these because they're called nearly every ANM draw call and otherwise

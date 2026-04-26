@@ -594,6 +594,7 @@ void StageMenu::OnDrawGameMenu()
 
     if (g_GameManager.isInGameMenu)
     {
+        g_AnmManager->FlushVertexBuffer();
         g_Supervisor.viewport.x = g_GameManager.arcadeRegionTopLeftPos.x;
         g_Supervisor.viewport.y = g_GameManager.arcadeRegionTopLeftPos.y;
         g_Supervisor.viewport.width = g_GameManager.arcadeRegionSize.x;
@@ -807,7 +808,7 @@ void StageMenu::OnDrawRetryMenu()
 
     if (g_GameManager.isInRetryMenu)
     {
-        //g_AnmManager->FlushVertexBuffer();
+        g_AnmManager->FlushVertexBuffer();
         g_Supervisor.viewport.x = g_GameManager.arcadeRegionTopLeftPos.x;
         g_Supervisor.viewport.y = g_GameManager.arcadeRegionTopLeftPos.y;
         g_Supervisor.viewport.width = g_GameManager.arcadeRegionSize.x;
@@ -836,6 +837,7 @@ void StageMenu::OnDrawRetryMenu()
             }
         }
     }
+    g_AnmManager->FlushVertexBuffer();
     return;
 }
 

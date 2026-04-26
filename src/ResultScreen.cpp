@@ -1730,7 +1730,6 @@ ChainCallbackResult ResultScreen::OnDraw(ResultScreen *resultScreen)
 
     ZunVec3 strPos;
 
-    g_AnmManager->FlushVertexBuffer();
     sprite = &resultScreen->unk_40[0];
     g_Supervisor.viewport.x = 0;
     g_Supervisor.viewport.y = 0;

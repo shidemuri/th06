@@ -66,7 +66,6 @@ void ScreenEffect::DrawSquare(ZunRect *rect, ZunColor rectColor)
 {
     VertexDiffuseXyzrhw vertices[4];
 
-    g_AnmManager->FlushVertexBuffer();
     if (g_AnmManager->currentTextureHandle == 0)
     {
         g_AnmManager->SetCurrentTexture(g_AnmManager->dummyTextureHandle);
@@ -187,7 +186,6 @@ ChainCallbackResult ScreenEffect::DrawFadeIn(ScreenEffect *effect)
 {
     ZunRect fadeRect;
 
-    g_AnmManager->FlushVertexBuffer();
     fadeRect.left = 0.0f;
     fadeRect.top = 0.0f;
     fadeRect.right = GAME_WINDOW_WIDTH;

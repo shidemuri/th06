@@ -507,7 +507,6 @@ void GameManager::SetupCameraStageBackground(f32 extraRenderDistance)
     f32 viewportMiddleHeight;
     f32 cameraDistance;
 
-    //g_AnmManager->FlushVertexBuffer();
     g_AnmManager->SetProjectionMode(PROJECTION_MODE_PERSPECTIVE);
 
     viewportMiddleWidth = g_Supervisor.viewport.width / 2.0f;
@@ -551,7 +550,6 @@ void GameManager::SetupCamera(f32 extraRenderDistance)
     f32 atVecX;
     f32 eyeVecZ;
 
-    //g_AnmManager->FlushVertexBuffer();
     g_AnmManager->SetProjectionMode(PROJECTION_MODE_PERSPECTIVE);
 
     viewportMiddleWidth = g_Supervisor.viewport.width / 2.0f;
