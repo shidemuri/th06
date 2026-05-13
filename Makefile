@@ -42,7 +42,7 @@ ROMFS		:=	romfs
 GFXBUILD	:=	$(ROMFS)/gfx
 
 TITLEID := 0004000000199996   # Your title ID (hex, 16 digits)
-PRODUCT_CODE := EOSD3DS         # Up to 16 chars
+PRODUCT_CODE := TH06         # Up to 16 chars
 VERSION := 0x0001              # Version number
 
 
@@ -232,8 +232,8 @@ ifdef HAS_MAKEROM
 		-elf $< \
 		-exefslogo \
 		-rsf $(TOPDIR)/th06.rsf \
-		-icon $(TOPDIR)/icon.png \
-		-banner $(TOPDIR)/banner.png
+		-icon $(TOPDIR)/icon.icn \
+		-banner $(TOPDIR)/banner.bnr
 else
 	@echo "skipping cia build as makerom is not installed"
 endif

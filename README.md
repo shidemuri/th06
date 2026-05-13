@@ -7,9 +7,7 @@ The original codebase was taken from [EoSD-portable](https://github.com/Gensokyo
 ## TODO:
 - shamelessly steal the batch rendering code from th08 decomp (because the game currently doesnt do that and it runs like garbage on real hardware)
 - find whichever unaligned accesses still remain
-- fix .cia build proecss
 - better pre-launch check process
-- a decent banner
 
 ### Usage
 
