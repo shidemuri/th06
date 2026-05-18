@@ -7,11 +7,10 @@
 
 #include "AnmIdx.hpp"
 #include "AnmVm.hpp"
-#include "GLFunc.hpp"
 #include "GameManager.hpp"
 #include "ZunResult.hpp"
 #include "ZunTimer.hpp"
-#include "graphics/GfxInterface.hpp"
+#include "GameWindow.hpp"
 #include "inttypes.hpp"
 
 #define TEX_FMT_UNKNOWN 0
@@ -23,7 +22,7 @@
 
 struct TextureData
 {
-    GLuint handle;
+    GfxTextureHandle handle;
     const void *fileData;
 
     // Fields needed to compensate for inability to read back texture for alpha loading
@@ -36,10 +35,10 @@ struct TextureData
 // Endian-neutral version of ZunColor, for use with OpenGL
 struct ColorData
 {
-    GLubyte r;
-    GLubyte g;
-    GLubyte b;
-    GLubyte a;
+    u8 r;
+    u8 g;
+    u8 b;
+    u8 a;
 
     ColorData()
     {
@@ -207,7 +206,7 @@ struct AnmManager
             this->UpdateDirtyStates();
         }
 
-        g_glFuncTable.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        g_GfxBackend->Draw(PRIM_TRIANGLE_STRIP, 0, 4);
     }
 
     // We need to do checks in these because they're called nearly every ANM draw call and otherwise
@@ -270,13 +269,13 @@ struct AnmManager
         this->dirtyFlags |= (1 << DIRTY_DEPTH_CONFIG);
     }
 
-    void SetCurrentTexture(GLuint textureHandle)
+    void SetCurrentTexture(GfxTextureHandle textureHandle)
     {
         if (this->currentTextureHandle != textureHandle)
         {
             this->FlushVertexBuffer();
             this->currentTextureHandle = textureHandle;
-            g_glFuncTable.glBindTexture(GL_TEXTURE_2D, textureHandle);
+            g_GfxBackend->BindTexture(textureHandle);
         }
     }
     void SetCurrentSprite(const AnmLoadedSprite *sprite)
@@ -443,8 +442,9 @@ struct AnmManager
     SDL_Surface *surfaces[32];
     //    SDL_Surface *surfacesBis[32];
     //    D3DXIMAGE_INFO surfaceSourceInfo[32];
-    GLuint currentTextureHandle;
-    GLuint dummyTextureHandle;
+    //GLuint currentTextureHandle;
+    GfxTextureHandle currentTextureHandle;
+    GfxTextureHandle dummyTextureHandle;
     u8 currentBlendMode;
     ProjectionMode projectionMode;
     const AnmLoadedSprite *currentSprite;
@@ -456,7 +456,7 @@ struct AnmManager
     i32 screenshotWidth;
     i32 screenshotHeight;
 
-    GfxInterface *gfxBackend;
+    //GfxInterface *gfxBackend;
 
   private:
     u32 dirtyFlags;

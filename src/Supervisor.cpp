@@ -315,7 +315,7 @@ ZunResult Supervisor::AddedCallback(Supervisor *s)
     //    if (g_Supervisor.d3dDevice->Present(0, 0, 0, 0) < 0)
     //        g_Supervisor.d3dDevice->Reset(&g_Supervisor.presentParameters);
 
-    SDL_GL_SwapWindow(g_Supervisor.gameWindow);
+    g_GfxBackend->SwapBuffers();
 
     //
     g_AnmManager->CopySurfaceToBackBuffer(0, 0, 0, 0, 0);
@@ -323,7 +323,7 @@ ZunResult Supervisor::AddedCallback(Supervisor *s)
     //        g_Supervisor.d3dDevice->Reset(&g_Supervisor.presentParameters);
     //
 
-    SDL_GL_SwapWindow(g_Supervisor.gameWindow);
+    g_GfxBackend->SwapBuffers();
 
     g_AnmManager->ReleaseSurface(0);
 
