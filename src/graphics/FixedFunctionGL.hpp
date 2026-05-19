@@ -51,6 +51,7 @@ struct FixedFunctionGL : GfxInterface
 
   private:
     std::vector<GLuint> textures;
+    std::vector<u32> freeTextures;
     SDL_Window* window;
     SDL_GLContext glContext;
 

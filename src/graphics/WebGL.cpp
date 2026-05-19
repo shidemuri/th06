@@ -422,7 +422,6 @@ void WebGL::SetDepthMask(bool enable) {
 }
 
 void WebGL::SetDepthFunc(DepthFunc func) {
-    // This'll end up less awkward once there's a render backend abstraction layer I swear
     if (func == DEPTH_FUNC_ALWAYS)
     {
         g_glFuncTable.glDepthFunc(GL_ALWAYS);
@@ -432,26 +431,38 @@ void WebGL::SetDepthFunc(DepthFunc func) {
         g_glFuncTable.glDepthFunc(GL_LEQUAL);
     }
 }
-
 GfxTextureHandle WebGL::CreateTexture() {
     GLuint texture;
     g_glFuncTable.glGenTextures(1, &texture);
-    textures.push_back(texture);
 
-    return {textures.size()-1};
+    u32 id;
+    if(!freeTextures.empty()) {
+        id = freeTextures.back();
+        freeTextures.pop_back();
+        textures[id] = texture;
+    } else {
+        id = textures.size();
+        textures.push_back(texture);
+    }
+
+    return {id};
 }
 
 void WebGL::BindTexture(GfxTextureHandle handle) {
+    if(handle > textures.size()) return;
     GLuint tex = textures[handle.id];
-    if(tex == 0) return;
-    g_glFuncTable.glBindTexture(GL_TEXTURE_2D, tex);
+    if(tex != 0) g_glFuncTable.glBindTexture(GL_TEXTURE_2D, tex);
 }
 
 void WebGL::DeleteTexture(GfxTextureHandle handle) {
+    if(handle > textures.size()) return;
     GLuint tex = textures[handle.id];
-    if(tex == 0) return;
-    g_glFuncTable.glDeleteTextures(1, &tex);
-    textures[handle.id] = 0;
+
+    if(tex != 0) {
+        g_glFuncTable.glDeleteTextures(1, &textures[handle.id]);
+        textures[handle.id] = 0;
+        freeTextures.push_back(handle.id);
+    }
 }
 
 void WebGL::SetTextureImage(u32 width, u32 height, PixelFormat fmt, PixelDataType type, const void* data) {

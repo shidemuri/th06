@@ -76,4 +76,5 @@ struct WebGL : GfxInterface
 
     GLint uniforms[UNIFORMS_COUNT];
     std::vector<GLuint> textures;
+    std::vector<u32> freeTextures;
 };
