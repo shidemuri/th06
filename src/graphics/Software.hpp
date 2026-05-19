@@ -6,10 +6,11 @@
 #include <memory>
 
 struct Texture {
-    const void* data;
+    std::vector<u32> texels; //RGBA32
     i32 width, height;
     PixelFormat format;
     PixelDataType type;
+    ZunColor GetPixel(i32 x, i32 y);
 };
 
 struct Software : GfxInterface
@@ -64,13 +65,19 @@ struct Software : GfxInterface
 
     SDL_Window* window;
     SDL_Renderer* renderer;
+    SDL_Texture* framebufferTexture;
+    u32* framebuffer;
+
+    f32* depthBuffer;
 
     i32 viewport[4];   //x, y, w, h
-    f32 clearColor[4]; //r, g, b, a
+    ZunColor clearColor; //r, g, b, a
     f32 clearDepth;    //0..1
     f32 depthRange[2]; //near, far
     bool depthMask;
     DepthFunc depthFunc;
+
+    ZunColor textureFactor;
 
     ZunMatrix model;
     ZunMatrix view;
@@ -84,7 +91,12 @@ struct Software : GfxInterface
     void* diffuseData;
     std::size_t diffuseStride;
 
+    bool useTexCoord;
+    bool useDiffuse;
+
     void drawLine(i32 x1, i32 y1, i32 x2, i32 y2);
-    inline ZunVec3 ProjectToNDC(ZunVec3 vertex);
+    void drawPoint(i32 x, i32 y, ZunColor color);
+    inline ZunVec3 ProjectToNDC(ZunVec3 vertex, ZunMatrix mvp);
+    inline ZunVec2 ProjectTexCoordToNDC(ZunVec2 texCoord, ZunMatrix textureMatrix);
     inline ZunVec3 NDCToScreen(ZunVec3 vertex);
 };

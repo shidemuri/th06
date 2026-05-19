@@ -116,6 +116,54 @@ struct ZunVec2
         this->y = y;
     }
 
+    ZunVec2 operator+(const ZunVec2 &b) const
+    {
+        return ZunVec2(this->x + b.x, this->y + b.y);
+    }
+
+    ZunVec2 &operator+=(const ZunVec2 &b)
+    {
+        this->x += b.x;
+        this->y += b.y;
+
+        return *this;
+    }
+
+    ZunVec2 &operator-=(const ZunVec2 &b)
+    {
+        this->x -= b.x;
+        this->y -= b.y;
+
+        return *this;
+    }
+
+    ZunVec2 &operator*=(const ZunVec2 &b) {
+        this->x *= b.x;
+        this->y *= b.y;
+    
+        return *this;
+    }
+
+    ZunVec2 operator-(const ZunVec2 &b) const
+    {
+        return ZunVec2(this->x - b.x, this->y - b.y);
+    }
+
+    ZunVec2 operator*(const f32 mult) const
+    {
+        return ZunVec2(this->x * mult, this->y * mult);
+    }
+
+    ZunVec2 operator*(const ZunVec2 &mult) const
+    {
+        return ZunVec2(this->x * mult.x, this->y * mult.y);
+    }
+
+    ZunVec2 operator/(const f32 divisor) const
+    {
+        return ZunVec2(this->x / divisor, this->y / divisor);
+    }
+
     f32 VectorLength() const
     {
         return std::sqrt((f64)(this->x * this->x + this->y * this->y));
