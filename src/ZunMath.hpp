@@ -303,6 +303,18 @@ struct ZunMatrix
         return result;
     }
 
+    ZunVec4 operator*(const ZunVec4 &b) const
+    {
+        ZunVec4 result(0.0f, 0.0f, 0.0f, 0.0f);
+
+        result.x = this->m[0][0] * b.x + this->m[1][0] * b.y + this->m[2][0] * b.z + this->m[3][0] * b.w;
+        result.y = this->m[0][1] * b.x + this->m[1][1] * b.y + this->m[2][1] * b.z + this->m[3][1] * b.w;
+        result.z = this->m[0][2] * b.x + this->m[1][2] * b.y + this->m[2][2] * b.z + this->m[3][2] * b.w;
+        result.w = this->m[0][3] * b.x + this->m[1][3] * b.y + this->m[2][3] * b.z + this->m[3][3] * b.w;
+
+        return result;
+    }
+
     void Identity()
     {
         std::memset(this->m, 0, sizeof(m));

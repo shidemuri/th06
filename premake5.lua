@@ -71,6 +71,7 @@ project "th06"
     "src/ZunTimer.cpp",
     "src/graphics/FixedFunctionGL.cpp",
     "src/graphics/WebGL.cpp",
+    "src/graphics/Software.cpp",
     "src/pbg3/FileAbstraction.cpp",
     "src/pbg3/IPbg3Parser.cpp",
     "src/pbg3/Pbg3Archive.cpp",
