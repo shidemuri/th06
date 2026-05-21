@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AnmManager.hpp"
 #include "GfxInterface.hpp"
 #include <SDL2/SDL.h>
 #include <vector>
@@ -10,7 +11,71 @@ struct Texture {
     i32 width, height;
     PixelFormat format;
     PixelDataType type;
-    ZunColor GetPixel(i32 x, i32 y);
+    inline ZunColor GetPixel(i32 x, i32 y);
+};
+
+//It is extremely recommended that you compile as Release if you want to use the software rasterizer
+//because it runs extremely slow on Debug
+
+struct FragColor { //0..1
+    f32 r;
+    f32 g;
+    f32 b;
+    f32 a;
+
+    FragColor()
+    {
+    }
+
+    operator ColorData() const {
+        return {(u32)(r*255.f),(u32)(g*255.f),(u32)(b*255.f),(u32)(a*255.f)};
+    }
+    
+    operator ZunColor() const {
+        return (((u32)(a*255.f)) << 24) | (((u32)(r*255.f)) << 16) | (((u32)(g*255.f)) << 8) | ((u32)(b*255.f));
+    }
+
+    FragColor(f32 r, f32 g, f32 b, f32 a) {
+        this->r = r;
+        this->g = g;
+        this->b = b;
+        this->a = a;
+    }
+
+    FragColor(ZunColor color)
+    {
+        a = (color >> 24) / 255.f;
+        r = ((color >> 16) & 0xFF)/ 255.f;
+        g = ((color >> 8) & 0xFF) / 255.f;
+        b = (color & 0xFF) / 255.f;
+    };
+
+    FragColor(const ColorData &color) {
+        r = color.r / 255.f;
+        g = color.g / 255.f;
+        b = color.b / 255.f;
+        a = color.a / 255.f;
+    }
+
+    FragColor operator*(const FragColor c) {
+        return FragColor(r*c.r, g*c.g, b*c.b, a*c.a);
+    }
+
+    FragColor operator*(const f32 c) {
+        return FragColor(r*c, g*c, b*c, a*c);
+    }
+
+    FragColor operator+(const FragColor c) {
+        return FragColor(r+c.r, g+c.g, b+c.b, a+c.a);
+    }
+
+    FragColor operator+(const f32 c) {
+        return FragColor(r+c, g+c, b+c, a+c);
+    }
+
+    FragColor InterpolateRGB(const FragColor &c2, f32 factor) const {
+        return FragColor(r * (1-factor) + c2.r * factor, g * (1-factor) + c2.g * factor, b * (1-factor) + c2.b * factor, a);
+    }
 };
 
 struct Software : GfxInterface
@@ -67,22 +132,29 @@ struct Software : GfxInterface
     SDL_Renderer* renderer;
     SDL_Texture* framebufferTexture;
     u32* framebuffer;
-
     f32* depthBuffer;
 
     i32 viewport[4];   //x, y, w, h
     ZunColor clearColor; //r, g, b, a
     f32 clearDepth;    //0..1
-    f32 depthRange[2]; //near, far
+    f32 fogNear;
+    f32 fogFar;
+    ZunColor fogColor;
+    f32 depthNear, depthFar;
     bool depthMask;
     DepthFunc depthFunc;
 
     ZunColor textureFactor;
+    BlendMode blendMode;
 
     ZunMatrix model;
     ZunMatrix view;
     ZunMatrix projection;
     ZunMatrix textureMatrix;
+
+    bool noVertexBuffer;
+    bool noFog;
+    bool useFragDepth;
 
     void* vertexData;
     std::size_t vertexStride;
@@ -91,12 +163,12 @@ struct Software : GfxInterface
     void* diffuseData;
     std::size_t diffuseStride;
 
-    bool useTexCoord;
-    bool useDiffuse;
+    bool useTexCoord = false;
+    bool useDiffuse = false;
 
-    void drawLine(i32 x1, i32 y1, i32 x2, i32 y2);
-    void drawPoint(i32 x, i32 y, ZunColor color);
-    inline ZunVec3 ProjectToNDC(ZunVec3 vertex, ZunMatrix mvp);
+    ColorOp colorOp;
+
+    inline ZunVec3 ProjectToNDC(ZunVec3 vertex, ZunMatrix mv, ZunMatrix p, f32 &viewZ, f32 &W);
     inline ZunVec2 ProjectTexCoordToNDC(ZunVec2 texCoord, ZunMatrix textureMatrix);
     inline ZunVec3 NDCToScreen(ZunVec3 vertex);
 };

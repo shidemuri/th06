@@ -44,6 +44,13 @@ struct ColorData
     {
     }
 
+    ColorData(u8 r, u8 g, u8 b, u8 a) {
+        this->r = r;
+        this->g = g;
+        this->b = b;
+        this->a = a;
+    }
+
     ColorData(ZunColor color)
     {
         a = (color >> 24);
