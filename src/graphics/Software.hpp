@@ -17,67 +17,54 @@ struct Texture {
 //It is extremely recommended that you compile as Release if you want to use the software rasterizer
 //because it runs extremely slow on Debug
 
-struct FragColor { //0..1
-    f32 r;
-    f32 g;
-    f32 b;
-    f32 a;
+constexpr inline u8 ZunA(ZunColor c) { return c >> 24; }
+constexpr inline u8 ZunR(ZunColor c) { return (c >> 16) & 0xFF; }
+constexpr inline u8 ZunG(ZunColor c) { return (c >> 8) & 0xFF; }
+constexpr inline u8 ZunB(ZunColor c) { return c & 0xFF; }
 
-    FragColor()
-    {
-    }
-
-    operator ColorData() const {
-        return {(u32)(r*255.f),(u32)(g*255.f),(u32)(b*255.f),(u32)(a*255.f)};
-    }
-    
-    operator ZunColor() const {
-        return (((u32)(a*255.f)) << 24) | (((u32)(r*255.f)) << 16) | (((u32)(g*255.f)) << 8) | ((u32)(b*255.f));
-    }
-
-    FragColor(f32 r, f32 g, f32 b, f32 a) {
+struct Diffuse { //*sigh*
+    f32 r,g,b,a;
+    Diffuse() {}
+    Diffuse(f32 r, f32 g, f32 b, f32 a) {
         this->r = r;
         this->g = g;
         this->b = b;
         this->a = a;
     }
-
-    FragColor(ZunColor color)
+    Diffuse(ColorData colorData) {
+        this->r = colorData.r;
+        this->g = colorData.g;
+        this->b = colorData.b;
+        this->a = colorData.a;
+    }
+    Diffuse operator*(const f32 mult) const
     {
-        a = (color >> 24) / 255.f;
-        r = ((color >> 16) & 0xFF)/ 255.f;
-        g = ((color >> 8) & 0xFF) / 255.f;
-        b = (color & 0xFF) / 255.f;
-    };
-
-    FragColor(const ColorData &color) {
-        r = color.r / 255.f;
-        g = color.g / 255.f;
-        b = color.b / 255.f;
-        a = color.a / 255.f;
+        return Diffuse(this->r * mult, this->g * mult, this->b * mult, this->a * mult);
     }
 
-    FragColor operator*(const FragColor c) {
-        return FragColor(r*c.r, g*c.g, b*c.b, a*c.a);
+    Diffuse operator*(const Diffuse &mult) const
+    {
+        return Diffuse(this->r * mult.r, this->g * mult.g, this->b * mult.b, this->a * mult.a);
+    }
+    Diffuse operator+(const f32 mult) const
+    {
+        return Diffuse(this->r + mult, this->g + mult, this->b + mult, this->a + mult);
     }
 
-    FragColor operator*(const f32 c) {
-        return FragColor(r*c, g*c, b*c, a*c);
+    Diffuse operator+(const Diffuse &mult) const
+    {
+        return Diffuse(this->r + mult.r, this->g + mult.g, this->b + mult.b, this->a + mult.a);
     }
 
-    FragColor operator+(const FragColor c) {
-        return FragColor(r+c.r, g+c.g, b+c.b, a+c.a);
-    }
-
-    FragColor operator+(const f32 c) {
-        return FragColor(r+c, g+c, b+c, a+c);
-    }
-
-    FragColor InterpolateRGB(const FragColor &c2, f32 factor) const {
-        return FragColor(r * (1-factor) + c2.r * factor, g * (1-factor) + c2.g * factor, b * (1-factor) + c2.b * factor, a);
+    Diffuse &operator+=(const Diffuse &b) {
+        this->r += b.r;
+        this->g += b.g;
+        this->b += b.b;
+        this->a += b.a;
+    
+        return *this;
     }
 };
-
 struct Software : GfxInterface
 {
     static GfxInterface *Init();
@@ -136,7 +123,7 @@ struct Software : GfxInterface
 
     i32 viewport[4];   //x, y, w, h
     ZunColor clearColor; //r, g, b, a
-    f32 clearDepth;    //0..1
+    f32 clearDepth = 1;
     f32 fogNear;
     f32 fogFar;
     ZunColor fogColor;
