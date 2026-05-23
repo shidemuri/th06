@@ -61,6 +61,8 @@ GfxInterface *Software::Init()
     self->noVertexBuffer = g_Supervisor.cfg.opts & (1 << GCOS_DONT_USE_VERTEX_BUF);
     self->noFog = g_Supervisor.cfg.opts & (1 << GCOS_DONT_USE_FOG);
 
+    utils::DebugPrint2("WARNING: Using software rasterizer, which can be slow. If performance is bad, make sure you're compiling with optimizations (building as release), or go with another graphical backend if possible.");
+
     return self;
 }
 
@@ -114,34 +116,6 @@ void Software::ToggleVertexAttribute(u8 attr, bool enable)
     {
         useDiffuse = enable;
     }
-    /*if (attr & VERTEX_ATTR_TEX_COORD)
-    {
-        // Arg 0 will be the texture is it's used, and diffuse otherwise. Arg 1 will always be diffuse
-        if (enable)
-        {
-            g_glFuncTable.glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
-            g_glFuncTable.glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
-            g_glFuncTable.glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        }
-        else
-        {
-            g_glFuncTable.glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_PRIMARY_COLOR);
-            g_glFuncTable.glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_PRIMARY_COLOR);
-            g_glFuncTable.glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        }
-    }
-
-    if (attr & VERTEX_ATTR_DIFFUSE)
-    {
-        if (enable)
-        {
-            g_glFuncTable.glEnableClientState(GL_COLOR_ARRAY);
-        }
-        else
-        {
-            g_glFuncTable.glDisableClientState(GL_COLOR_ARRAY);
-        }
-    }*/
 }
 
 void Software::SetAttributePointer(VertexAttributeArrays attr, std::size_t stride, void *ptr)
@@ -171,33 +145,15 @@ void Software::SetColorOp(TextureOpComponent component, ColorOp op)
         return;
     }
     colorOp = op;
-
-    /*const GLenum opEnums[3] = {GL_MODULATE, GL_ADD, GL_REPLACE};
-
-    if (component > COMPONENT_ALPHA || op > COLOR_OP_REPLACE)
-    {
-        return;
-    }
-
-    GLenum componentEnum = component == COMPONENT_ALPHA ? GL_COMBINE_ALPHA : GL_COMBINE_RGB;
-
-    g_glFuncTable.glTexEnvi(GL_TEXTURE_ENV, componentEnum, opEnums[op]);*/
 }
 
 void Software::SetTextureFactor(ZunColor factor)
 {
-    //f32 tfactorColor[4] = {((factor >> 16) & 0xFF) / 255.0f, ((factor >> 8) & 0xFF) / 255.0f,
-    //                           (factor & 0xFF) / 255.0f, ((factor >> 24) & 0xFF) / 255.0f};
-
     textureFactor = factor;
-
-    //g_glFuncTable.glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, tfactorColor);
 }
 
 void Software::SetTransformMatrix(TransformMatrix type, const ZunMatrix &matrix)
 {
-    // This is not going to work for modelview
-    //GLenum matrixEnum[4] = {GL_MODELVIEW, GL_MODELVIEW, GL_PROJECTION, GL_TEXTURE};
     switch (type) {
         case MATRIX_MODEL:
             model = matrix;
@@ -212,21 +168,11 @@ void Software::SetTransformMatrix(TransformMatrix type, const ZunMatrix &matrix)
             textureMatrix = matrix;
             break;
     }
-
-    //g_glFuncTable.glMatrixMode(matrixEnum[type]);
-    //g_glFuncTable.glLoadMatrixf((const GLfloat *)&matrix);
 }
 
 
 void Software::Enable(Capabilities cap) {
-    switch (cap) {
-        case CAPS_BLEND:
-        //    g_glFuncTable.glEnable(GL_BLEND);
-            break;
-        case CAPS_DEPTH_TEST:
-        //    g_glFuncTable.glEnable(GL_DEPTH_TEST);
-            break;
-    }
+
 }
 
 void Software::SetBlendMode(BlendMode mode) {
@@ -234,7 +180,6 @@ void Software::SetBlendMode(BlendMode mode) {
 }
 
 void Software::SetViewport(i32 x, i32 y, i32 width, i32 height) {
-    //g_glFuncTable.glViewport(x, y, width, height);
     viewport[0] = x;
     viewport[1] = y;
     viewport[2] = width;
@@ -242,14 +187,12 @@ void Software::SetViewport(i32 x, i32 y, i32 width, i32 height) {
 }
 
 void Software::GetViewport(u32* viewport) {
-    //g_glFuncTable.glGetIntegerv(GL_VIEWPORT, (GLint*)viewport);
     for (int i = 0; i < 4; i++) {
         viewport[i] = this->viewport[i];
     }
 }
 
 void Software::GetDepthRange(f32* depthRange) {
-    //g_glFuncTable.glGetFloatv(GL_DEPTH_RANGE, depthRange);
     depthRange[0] = this->depthNear;
     depthRange[1] = this->depthFar;
 }
@@ -282,17 +225,14 @@ void Software::Clear(u32 clearBits) {
     if (clearBits & CLEAR_DEPTH_BUFFER) {
         std::fill(depthBuffer, depthBuffer + GAME_WINDOW_WIDTH * GAME_WINDOW_HEIGHT, clearDepth);
     }
-    //g_glFuncTable.glClear(mask);
 }
 
 void Software::SetDepthRange(f32 near, f32 far) {
-    //g_glFuncTable.glDepthRangef(near, far);
     depthNear = near;
     depthFar = far;
 }
 
 void Software::SetDepthMask(bool enable) {
-    //g_glFuncTable.glDepthMask(enable);
     depthMask = enable;
 }
 

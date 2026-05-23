@@ -22,7 +22,7 @@ constexpr inline u8 ZunR(ZunColor c) { return (c >> 16) & 0xFF; }
 constexpr inline u8 ZunG(ZunColor c) { return (c >> 8) & 0xFF; }
 constexpr inline u8 ZunB(ZunColor c) { return c & 0xFF; }
 
-struct Diffuse { //*sigh*
+struct Diffuse { //yay another color struct!!!
     f32 r,g,b,a;
     Diffuse() {}
     Diffuse(f32 r, f32 g, f32 b, f32 a) {

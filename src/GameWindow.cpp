@@ -29,7 +29,7 @@ static const struct
     GfxInterface *(*TryInit)();
 } s_RenderBackends[] = {//{"GL(ES) 2.0 / WebGL", WebGL::Create},
                         //{"Fixed function GL(ES)", FixedFunctionGL::Init},
-                        {"Software fallback", Software::Init}};
+                        {"Software fallback (SLOW)", Software::Init}};
 
 RenderResult GameWindow::Render()
 {
@@ -195,6 +195,8 @@ void GameWindow::CreateGameWindow()
         }
         utils::DebugPrint2("Renderer creation for backend %s failed", s_RenderBackends[i].name);
     }
+
+    if(!g_GfxBackend) g_GameErrorContext.Fatal(TH_ERR_D3D_INIT_FAILED);
 
     g_GameWindow.lastActiveAppValue = 1;
 }

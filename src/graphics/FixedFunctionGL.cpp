@@ -298,7 +298,6 @@ void FixedFunctionGL::SetDepthMask(bool enable) {
 }
 
 void FixedFunctionGL::SetDepthFunc(DepthFunc func) {
-    // This'll end up less awkward once there's a render backend abstraction layer I swear
     if (func == DEPTH_FUNC_ALWAYS)
     {
         g_glFuncTable.glDepthFunc(GL_ALWAYS);
