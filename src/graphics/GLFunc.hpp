@@ -56,7 +56,7 @@ struct GLFuncTable
     void (GLAPIENTRY *glViewport)(GLint x, GLint y, GLsizei width, GLsizei height);
 
     // GL(ES) 2.X / WebGL
-    PFNGLATTACHSHADERPROC glAttachShader;
+    /*PFNGLATTACHSHADERPROC glAttachShader;
     PFNGLBINDATTRIBLOCATIONPROC glBindAttribLocation;
     PFNGLCOMPILESHADERPROC glCompileShader;
     PFNGLCREATEPROGRAMPROC glCreateProgram;
@@ -77,7 +77,7 @@ struct GLFuncTable
     PFNGLUNIFORM4FPROC glUniform4f;
     PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
     PFNGLUSEPROGRAMPROC glUseProgram;
-    PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
+    PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;*/
 
   private:
     // GLES forms for cases where they're different

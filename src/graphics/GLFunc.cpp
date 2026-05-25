@@ -4,8 +4,8 @@
 
 GLFuncTable g_glFuncTable;
 
-#define TRY_RESOLVE_FUNCTION(func) this->func = (decltype(this->func))SDL_GL_GetProcAddress(#func);
-#define TRY_RESOLVE_FUNCTION_GLES(func) this->func##_ptr = (decltype(this->func##_ptr))SDL_GL_GetProcAddress(#func);
+#define TRY_RESOLVE_FUNCTION(func) this->func = (decltype(this->func))::func;
+#define TRY_RESOLVE_FUNCTION_GLES(func) this->func##_ptr = (decltype(this->func##_ptr))::func;
 
 void GLFuncTable::ResolveFunctions(bool glesContext)
 {
@@ -53,8 +53,8 @@ void GLFuncTable::ResolveFunctions(bool glesContext)
 
     if (glesContext)
     {
-        TRY_RESOLVE_FUNCTION_GLES(glClearDepthf)
-        TRY_RESOLVE_FUNCTION_GLES(glDepthRangef)
+        //TRY_RESOLVE_FUNCTION_GLES(glClearDepthf)
+        //TRY_RESOLVE_FUNCTION_GLES(glDepthRangef)
     }
     else
     {
@@ -62,7 +62,7 @@ void GLFuncTable::ResolveFunctions(bool glesContext)
         TRY_RESOLVE_FUNCTION(glDepthRange)
     }
 
-    TRY_RESOLVE_FUNCTION(glAttachShader)
+    /*TRY_RESOLVE_FUNCTION(glAttachShader)
     TRY_RESOLVE_FUNCTION(glBindAttribLocation)
     TRY_RESOLVE_FUNCTION(glCompileShader)
     TRY_RESOLVE_FUNCTION(glCreateProgram)
@@ -83,7 +83,7 @@ void GLFuncTable::ResolveFunctions(bool glesContext)
     TRY_RESOLVE_FUNCTION(glUniform4f)
     TRY_RESOLVE_FUNCTION(glUniformMatrix4fv)
     TRY_RESOLVE_FUNCTION(glUseProgram)
-    TRY_RESOLVE_FUNCTION(glVertexAttribPointer)
+    TRY_RESOLVE_FUNCTION(glVertexAttribPointer)*/
 
     this->isGlesContext = glesContext;
 }
