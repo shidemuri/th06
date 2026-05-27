@@ -1887,10 +1887,15 @@ ZunResult AnmManager::LoadSurface(i32 surfaceIdx, const char *path)
     SDL_Surface* surface = this->surfaces[surfaceIdx];
     u32 texW = BitCeil((u32)surface->w);
     u32 texH = BitCeil((u32)surface->h);
-    g_GfxBackend->SetTextureImage(texW, texH, PIXEL_RGB, PIXEL_UNSIGNED_BYTE, NULL);
-    u8* pixels = ExtractSurfacePixels(surface, 3);
-    g_GfxBackend->SetTextureSubImage(0, 0, surface->w, surface->h, pixels);
-    free(pixels);
+    u8 *texturePixels = new u8[texW * texH * 3]();
+    u8 *surfacePixels = ExtractSurfacePixels(surface, 3);
+    for (int y = 0; y < surface->h; y++)
+    {
+        std::memcpy(texturePixels + y * texW * 3, surfacePixels + y * surface->w * 3, surface->w * 3);
+    }
+    g_GfxBackend->SetTextureImage(texW, texH, PIXEL_RGB, PIXEL_UNSIGNED_BYTE, texturePixels);
+    delete[] surfacePixels;
+    delete[] texturePixels;
 
     return ZUN_SUCCESS;
 

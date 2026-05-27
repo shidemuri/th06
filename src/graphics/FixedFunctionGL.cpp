@@ -208,6 +208,7 @@ void FixedFunctionGL::ToggleVertexAttribute(u8 attr, bool enable)
         // Arg 0 will be the texture is it's used, and diffuse otherwise. Arg 1 will always be diffuse
         if (enable)
         {
+            g_glFuncTable.glEnable(GL_TEXTURE_2D);
             g_glFuncTable.glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
             g_glFuncTable.glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
             g_glFuncTable.glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -217,6 +218,7 @@ void FixedFunctionGL::ToggleVertexAttribute(u8 attr, bool enable)
             g_glFuncTable.glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_PRIMARY_COLOR);
             g_glFuncTable.glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_PRIMARY_COLOR);
             g_glFuncTable.glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            g_glFuncTable.glDisable(GL_TEXTURE_2D);
         }
     }
 
