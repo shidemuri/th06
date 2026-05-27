@@ -420,7 +420,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    TTF_Font *font = TTF_OpenFont("/th06/NotoSans-Regular.ttf", 18);
+    TTF_Font *font = TTF_OpenFont("NotoSans-Regular.ttf", 18);
     if (!font)
     {
         printf("Failed to load font: %s\n", TTF_GetError());
