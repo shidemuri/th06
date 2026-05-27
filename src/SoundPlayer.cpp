@@ -497,6 +497,7 @@ void SoundPlayer::MixAudio(u32 samples)
 {
     std::vector<i16> finalBuffer(samples);
     std::vector<i32> mixBuffer(samples);
+    std::vector<i16> rwBuffer(samples*2);
     u8 playingChannels = 0;
 
     this->soundBufMutex.lock();
@@ -548,12 +549,13 @@ void SoundPlayer::MixAudio(u32 samples)
             const u32 samplesToMix =
                 std::min((samples / 2) - samplesMixed, this->backgroundMusic.loopEnd - this->backgroundMusic.pos);
 
+            SDL_RWread(this->backgroundMusic.srcWav.fileStream, rwBuffer.data(), sizeof(i16), samplesToMix*2);
             for (u32 j = 0; j < samplesToMix; j++)
             {
                 mixBuffer[samplesMixed + j * 2] +=
-                    ((i16)SDL_ReadLE16(this->backgroundMusic.srcWav.fileStream)) * fadeoutMult;
+                    ((i16)SDL_SwapLE16(rwBuffer[j * 2])) * fadeoutMult;
                 mixBuffer[samplesMixed + j * 2 + 1] +=
-                    ((i16)SDL_ReadLE16(this->backgroundMusic.srcWav.fileStream)) * fadeoutMult;
+                    ((i16)SDL_SwapLE16(rwBuffer[j * 2 + 1])) * fadeoutMult;
             }
 
             this->backgroundMusic.pos += samplesToMix;

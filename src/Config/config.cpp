@@ -12,6 +12,7 @@
 
 #include "../Supervisor.hpp"
 #include "../inttypes.hpp"
+#include "../i18n.hpp"
 #include "Widgets.hpp"
 
 constexpr SDL_Color kBackgroundColor{43, 43, 43, 255};
@@ -356,9 +357,9 @@ class ConfigUI
     }
 };
 
-int main()
+int main(int argc, char* argv[])
 {
-    const char *configPath = "東方紅魔郷.cfg";
+    const char *configPath = "/th06/"TH_CONFIG_FILE;
 
     GameConfiguration cfg;
     if (const auto data = FileSystem::OpenPath(configPath))
@@ -399,7 +400,7 @@ int main()
     }
 
     SDL_Window *window =
-        SDL_CreateWindow("Touhou 6 Config", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 450, 600, SDL_WINDOW_SHOWN);
+        SDL_CreateWindow("Touhou 6 Config", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 450, 480, SDL_WINDOW_SHOWN);
 
     if (!window)
     {
@@ -419,7 +420,7 @@ int main()
         return 1;
     }
 
-    TTF_Font *font = TTF_OpenFont("NotoSans-Regular.ttf", 18);
+    TTF_Font *font = TTF_OpenFont("/th06/NotoSans-Regular.ttf", 18);
     if (!font)
     {
         printf("Failed to load font: %s\n", TTF_GetError());

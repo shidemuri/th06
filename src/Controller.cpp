@@ -8,13 +8,16 @@
 #include "Supervisor.hpp"
 #include "i18n.hpp"
 #include "utils.hpp"
-
+#include <wiiuse/wpad.h>
 // DIFFABLE_STATIC(JOYCAPSA, g_JoystickCaps)
 static u16 g_FocusButtonConflictState;
 static u8 *keyboardState;
+static u32 wiimoteState;
 
 u16 Controller::GetJoystickCaps(void)
 {
+    WPAD_Init();
+    WPAD_SetDataFormat(WPAD_CHAN_0, WPAD_FMT_BTNS);
     //    JOYINFOEX pji;
 
     //    pji.dwSize = sizeof(JOYINFOEX);
@@ -34,6 +37,7 @@ u16 Controller::GetJoystickCaps(void)
 #define JOYSTICK_BUTTON_PRESSED(button, x, y) (x > y ? button : 0)
 #define JOYSTICK_BUTTON_PRESSED_INVERT(button, x, y) (x < y ? button : 0)
 #define KEYBOARD_KEY_PRESSED(button, x) keyboardState[x] ? button : 0
+#define WIIMOTE_BTN_PRESSED(button,x) (wiimoteState & x) ? button : 0
 
 u16 Controller::GetControllerInput(u16 buttons)
 {
@@ -361,6 +365,18 @@ const u8 *Controller::GetControllerState()
 u16 Controller::GetInput(void)
 {
     u16 buttons = 0;
+    WPAD_ScanPads();
+    wiimoteState = WPAD_ButtonsHeld(0);
+
+    buttons |= WIIMOTE_BTN_PRESSED(TH_BUTTON_UP, WPAD_BUTTON_RIGHT);
+    buttons |= WIIMOTE_BTN_PRESSED(TH_BUTTON_DOWN, WPAD_BUTTON_LEFT);
+    buttons |= WIIMOTE_BTN_PRESSED(TH_BUTTON_LEFT, WPAD_BUTTON_UP);
+    buttons |= WIIMOTE_BTN_PRESSED(TH_BUTTON_RIGHT, WPAD_BUTTON_DOWN);
+    buttons |= WIIMOTE_BTN_PRESSED(TH_BUTTON_SHOOT, WPAD_BUTTON_2);
+    buttons |= WIIMOTE_BTN_PRESSED(TH_BUTTON_BOMB, WPAD_BUTTON_1);
+    buttons |= WIIMOTE_BTN_PRESSED(TH_BUTTON_MENU, WPAD_BUTTON_PLUS);
+    buttons |= WIIMOTE_BTN_PRESSED(TH_BUTTON_SKIP, WPAD_BUTTON_A);
+    buttons |= WIIMOTE_BTN_PRESSED(TH_BUTTON_FOCUS, WPAD_BUTTON_B);
 
     buttons |= KEYBOARD_KEY_PRESSED(TH_BUTTON_UP, SDL_SCANCODE_UP);
     buttons |= KEYBOARD_KEY_PRESSED(TH_BUTTON_DOWN, SDL_SCANCODE_DOWN);

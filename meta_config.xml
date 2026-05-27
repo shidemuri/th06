@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<app version="1">
+  <name>th06_config</name>
+  <coder>GensokyoClub</coder>
+  <version>0.0.1</version>
+  <release_date>202605260000</release_date>
+  <short_description>EoSD-portable configuration</short_description> 
+  <long_description> Configuration for th06 (this executable is the equivalent of custom.exe)
+  
+Wii port of Touhou Koumakyou ~ the Embodiment of Scarlet Devil 1.02h
+
+Refer to the README on https://github.com/shidemuri/th06 (wii branch) for usage instructions.</long_description>
+</app>

@@ -130,7 +130,9 @@ Checkbox::Checkbox(SDL_Rect rect, std::string label, bool initial, TTF_Font *fon
 
 void Checkbox::handleEvent(const SDL_Event &e)
 {
-    if (e.type != SDL_MOUSEBUTTONDOWN || e.button.button != SDL_BUTTON_LEFT)
+    //apparently the wiimote A button is equivalent to a right click
+    //spectacular
+    if (e.type != SDL_MOUSEBUTTONDOWN || e.button.button != SDL_BUTTON_RIGHT)
     {
         return;
     }
@@ -188,7 +190,7 @@ RadioButton::RadioButton(SDL_Rect rect, std::string label, int groupId, int opti
 
 void RadioButton::handleEvent(const SDL_Event &e)
 {
-    if (e.type != SDL_MOUSEBUTTONDOWN || e.button.button != SDL_BUTTON_LEFT)
+    if (e.type != SDL_MOUSEBUTTONDOWN || e.button.button != SDL_BUTTON_RIGHT)
     {
         return;
     }
@@ -268,7 +270,7 @@ Button::Button(SDL_Rect rect, std::string label, std::function<void()> onClick)
 
 void Button::handleEvent(const SDL_Event &e)
 {
-    if (e.type != SDL_MOUSEBUTTONDOWN || e.button.button != SDL_BUTTON_LEFT)
+    if (e.type != SDL_MOUSEBUTTONDOWN || e.button.button != SDL_BUTTON_RIGHT)
     {
         return;
     }

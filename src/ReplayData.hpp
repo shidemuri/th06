@@ -12,8 +12,8 @@ struct ReplayDataInput
 struct StageReplayData
 {
     i32 score;
-    i16 randomSeed;
-    i16 pointItemsCollected;
+    LE<i16> randomSeed;
+    LE<i16> pointItemsCollected;
     u8 power;
     i8 livesRemaining;
     i8 bombsRemaining;

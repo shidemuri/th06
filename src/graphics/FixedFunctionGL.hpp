@@ -54,4 +54,7 @@ struct FixedFunctionGL : GfxInterface
   private:
     SDL_Window *window;
     SDL_GLContext glContext;
+    bool isPerspective = false;
+    bool hasMvp = false;
+    ZunMatrix mvp;
 };

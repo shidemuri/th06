@@ -4,6 +4,56 @@
 #include "i18n.hpp"
 #include <SDL2/SDL.h>
 
+namespace
+{
+bool IsPerspectiveProjection(const ZunMatrix &matrix)
+{
+    return matrix.m[3][3] == 0.0f && matrix.m[2][3] != 0.0f;
+}
+
+ZunMatrix FlipModelViewZ(const ZunMatrix &matrix)
+{
+    ZunMatrix converted = matrix;
+    for (int row = 0; row < 4; row++)
+    {
+        converted.m[row][2] = -converted.m[row][2];
+    }
+
+    return converted;
+}
+
+ZunMatrix ConvertPerspectiveProjectionForOpenGX(const ZunMatrix &matrix)
+{
+    ZunMatrix converted = matrix;
+    const f32 a = matrix.m[2][2];
+    const f32 b = matrix.m[3][2];
+    f32 nearPlane;
+    f32 farPlane;
+
+    if (a > 0.0f)
+    {
+        nearPlane = -b / (a + 1.0f);
+        farPlane = -b / (a - 1.0f);
+    }
+    else
+    {
+        const f32 positiveA = -a;
+        nearPlane = b / (positiveA - 1.0f);
+        farPlane = nearPlane * (positiveA + 1.0f) / (positiveA - 1.0f);
+    }
+
+    const f32 depthScale = -(farPlane + nearPlane) / (farPlane - nearPlane);
+    const f32 depthOffset = -(2.0f * farPlane * nearPlane) / (farPlane - nearPlane);
+
+    converted.m[2][2] = depthScale;
+    converted.m[3][2] = depthOffset;
+    converted.m[2][3] = -1.0f;
+    converted.m[3][3] = 0.0f;
+
+    return converted;
+}
+}
+
 void FixedFunctionGL::SetContextFlags()
 {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
@@ -227,6 +277,34 @@ void FixedFunctionGL::SetTransformMatrix(TransformMatrix type, const ZunMatrix &
     GLenum matrixEnum[4] = {GL_MODELVIEW, GL_MODELVIEW, GL_PROJECTION, GL_TEXTURE};
 
     g_glFuncTable.glMatrixMode(matrixEnum[type]);
+    if (type == MATRIX_MODEL || type == MATRIX_VIEW)
+    {
+        this->mvp = matrix;
+        this->hasMvp = true;
+        g_glFuncTable.glLoadMatrixf((const GLfloat *)&matrix);
+        return;
+    }
+
+    if (type == MATRIX_PROJECTION)
+    {
+        this->isPerspective = IsPerspectiveProjection(matrix);
+        ZunMatrix converted =
+            this->isPerspective ? ConvertPerspectiveProjectionForOpenGX(matrix) : matrix;
+        g_glFuncTable.glLoadMatrixf((const GLfloat *)&converted);
+        if (this->hasMvp)
+        {
+            ZunMatrix convertedModelView = this->mvp;
+            if(this->isPerspective) {
+                for (int row = 0; row < 4; row++)
+                {
+                    convertedModelView.m[row][2] = -convertedModelView.m[row][2];
+                }
+            }
+            g_glFuncTable.glMatrixMode(GL_MODELVIEW);
+            g_glFuncTable.glLoadMatrixf((const GLfloat *)&convertedModelView);
+        }
+        return;
+    }
     g_glFuncTable.glLoadMatrixf((const GLfloat *)&matrix);
 }
 

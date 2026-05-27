@@ -156,6 +156,11 @@ void AnmManager::ReleaseSurfaces(void)
             SDL_FreeSurface(this->surfaces[idx]);
             this->surfaces[idx] = NULL;
         }
+        if (this->surfacesCache[idx] != 0)
+        {
+            g_GfxBackend->DeleteTexture(this->surfacesCache[idx]);
+            this->surfacesCache[idx] = 0;
+        }
     }
 }
 
@@ -1877,6 +1882,16 @@ ZunResult AnmManager::LoadSurface(i32 surfaceIdx, const char *path)
         return ZUN_ERROR;
     }
 
+    CreateTextureObject();
+    this->surfacesCache[surfaceIdx] = this->currentTextureHandle;
+    SDL_Surface* surface = this->surfaces[surfaceIdx];
+    u32 texW = BitCeil((u32)surface->w);
+    u32 texH = BitCeil((u32)surface->h);
+    g_GfxBackend->SetTextureImage(texW, texH, PIXEL_RGB, PIXEL_UNSIGNED_BYTE, NULL);
+    u8* pixels = ExtractSurfacePixels(surface, 3);
+    g_GfxBackend->SetTextureSubImage(0, 0, surface->w, surface->h, pixels);
+    free(pixels);
+
     return ZUN_SUCCESS;
 
     //    u8 *data = FileSystem::OpenPath(path, 0);
@@ -1954,6 +1969,11 @@ void AnmManager::ReleaseSurface(i32 surfaceIdx)
         SDL_FreeSurface(this->surfaces[surfaceIdx]);
         this->surfaces[surfaceIdx] = NULL;
     }
+    if (this->surfacesCache[surfaceIdx] != 0)
+    {
+        g_GfxBackend->DeleteTexture(this->surfacesCache[surfaceIdx]);
+        this->surfacesCache[surfaceIdx] = 0;
+    }
 }
 
 void AnmManager::CopySurfaceToBackBuffer(i32 surfaceIdx, i32 srcX, i32 srcY, i32 dstX, i32 dstY)
@@ -2011,14 +2031,14 @@ void AnmManager::CopySurfaceToBackBuffer(i32 surfaceIdx, i32 srcX, i32 srcY, i32
 void AnmManager::CopySurfaceRectToBackBuffer(i32 surfaceIdx, i32 dstX, i32 dstY, i32 rectLeft, i32 rectTop,
                                              i32 rectWidth, i32 rectHeight)
 {
-    SDL_Surface *srcSurface = this->surfaces[surfaceIdx];
+    i32 srcSurface = this->surfacesCache[surfaceIdx];
 
     if (srcSurface == NULL)
     {
         return;
     }
 
-    ApplySurfaceToColorBuffer(srcSurface, (SDL_Rect){.x = rectLeft, .y = rectTop, .w = rectWidth, .h = rectHeight},
+    ApplySurfaceToColorBuffer(surfaceIdx, (SDL_Rect){.x = rectLeft, .y = rectTop, .w = rectWidth, .h = rectHeight},
                               (SDL_Rect){.x = dstX, .y = dstY, .w = rectWidth, .h = rectHeight});
     //
     //    IDirect3DSurface8 *D3D_Surface;
@@ -2142,7 +2162,7 @@ cleanup:
 }
 
 // Utter mess that needs to be rewritten
-void AnmManager::ApplySurfaceToColorBuffer(SDL_Surface *src, const SDL_Rect &srcRect, const SDL_Rect &dstRect)
+void AnmManager::ApplySurfaceToColorBuffer(i32 src, const SDL_Rect &srcRect, const SDL_Rect &dstRect)
 {
     ZunViewport originalViewport;
     ZunViewport fullscreenViewport;
@@ -2165,18 +2185,11 @@ void AnmManager::ApplySurfaceToColorBuffer(SDL_Surface *src, const SDL_Rect &src
 
     this->SetProjectionMode(PROJECTION_MODE_ORTHOGRAPHIC);
 
-    CreateTextureObject();
+    SDL_Surface* original = this->surfaces[src];
+    u32 textureWidth = BitCeil((u32)original->w);
+    u32 textureHeight = BitCeil((u32)original->h);
 
-    u32 textureWidth = BitCeil((u32)src->w);
-    u32 textureHeight = BitCeil((u32)src->h);
-
-    g_GfxBackend->SetTextureImage(textureWidth, textureHeight, PIXEL_RGB, PIXEL_UNSIGNED_BYTE, NULL);
-
-    u8 *surfaceData = ExtractSurfacePixels(src, 3);
-
-    g_GfxBackend->SetTextureSubImage(0, 0, src->w, src->h, surfaceData);
-
-    delete[] surfaceData;
+    this->SetCurrentTexture(this->surfacesCache[src]);
 
     VertexTex1DiffuseXyz verts[4];
 
@@ -2186,9 +2199,9 @@ void AnmManager::ApplySurfaceToColorBuffer(SDL_Surface *src, const SDL_Rect &src
     verts[3].position = ZunVec3(dstRect.x + dstRect.w, dstRect.y + dstRect.h, 0.0f);
 
     verts[0].textureUV = ZunVec2(0.0f, 0.0f);
-    verts[1].textureUV = ZunVec2(((f32)src->w) / textureWidth, 0.0f);
-    verts[2].textureUV = ZunVec2(0.0f, ((f32)src->h) / textureHeight);
-    verts[3].textureUV = ZunVec2(((f32)src->w) / textureWidth, ((f32)src->h) / textureHeight);
+    verts[1].textureUV = ZunVec2(((f32)original->w) / textureWidth, 0.0f);
+    verts[2].textureUV = ZunVec2(0.0f, ((f32)original->h) / textureHeight);
+    verts[3].textureUV = ZunVec2(((f32)original->w) / textureWidth, ((f32)original->h) / textureHeight);
 
     this->SetVertexAttributes(VERTEX_ATTR_TEX_COORD);
 
@@ -2205,8 +2218,6 @@ void AnmManager::ApplySurfaceToColorBuffer(SDL_Surface *src, const SDL_Rect &src
 
     this->SetColorOp(COMPONENT_ALPHA, COLOR_OP_MODULATE);
     this->SetColorOp(COMPONENT_RGB, COLOR_OP_MODULATE);
-
-    g_GfxBackend->DeleteTexture(this->currentTextureHandle);
 
     this->SetCurrentSprite(NULL);
     this->SetCurrentTexture(0);
