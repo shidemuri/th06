@@ -9,6 +9,8 @@
 #include "midi/MidiWin32.hpp"
 #elif defined(LIBASOUND_MIDI_SUPPORT)
 #include "midi/MidiAlsa.hpp"
+#elif defined(COREAUDIO_MIDI_SUPPORT)
+#include "midi/MidiCoreAudio.hpp"
 #else
 #include "midi/MidiDefault.hpp"
 #endif
@@ -93,12 +95,12 @@ struct MidiOutput
     ZunResult StopPlayback();
     void LoadTracks();
     void ClearTracks();
-    ZunResult ReadFileData(u32 idx, char *path);
+    ZunResult ReadFileData(u32 idx, const char *path);
     void ReleaseFileData(u32 idx);
     void ProcessMsg(MidiTrack *track);
 
     ZunResult ParseFile(i32 idx);
-    ZunResult LoadFile(char *midiPath);
+    ZunResult LoadFile(const char *midiPath);
     ZunResult Play();
 
     u32 SetFadeOut(u32 ms);

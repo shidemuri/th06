@@ -107,27 +107,27 @@ struct Supervisor
     static ZunResult DeletedCallback(Supervisor *s);
     static void DrawFpsCounter();
 
-    bool ReadMidiFile(u32 midiFileIdx, char *path);
+    bool ReadMidiFile(u32 midiFileIdx, const char *path);
     ZunResult PlayMidiFile(i32 midiFileIdx);
-    ZunResult PlayAudio(char *path);
+    ZunResult PlayAudio(const char *path);
     ZunResult StopAudio();
     ZunResult FadeOutMusic(f32 fadeOutSeconds);
 
     static ZunResult SetupDInput(Supervisor *s);
 
-    i32 LoadPbg3(i32 pbg3FileIdx, char *filename);
+    i32 LoadPbg3(i32 pbg3FileIdx, const char *filename);
     void ReleasePbg3(i32 pbg3FileIdx);
 
     ZunResult LoadConfig(const char *path);
 
     void TickTimer(i32 *frames, f32 *subframes);
 
-    f32 FramerateMultiplier()
+    f32 FramerateMultiplier() const
     {
         return this->effectiveFramerateMultiplier;
     }
 
-    u32 RedrawWholeFrame()
+    u32 RedrawWholeFrame() const
     {
         // SDL makes no guarantees about frame state after buffer swap,
         //   and Wayland will "reuse" old framebuffers in a nondeterministic
@@ -136,9 +136,21 @@ struct Supervisor
                (this->cfg.opts >> GCOS_DISPLAY_MINIMUM_GRAPHICS & 1) | 1;
     }
 
-    u32 ShouldRunAt60Fps()
+    u32 ShouldRunAt60Fps() const
     {
         return (this->cfg.opts >> GCOS_FORCE_60FPS & 1) || this->vsyncEnabled;
+    }
+
+    void SetProjectionFrustum(ZunMatrix p)
+    {
+        frustumTop.x = p.m[0][3] - p.m[0][1];
+        frustumTop.y = p.m[1][3] - p.m[1][1];
+        frustumTop.z = p.m[2][3] - p.m[2][1];
+        frustumTop.w = p.m[3][3] - p.m[3][1];
+        frustumBottom.x = p.m[0][3] + p.m[0][1];
+        frustumBottom.y = p.m[1][3] + p.m[1][1];
+        frustumBottom.z = p.m[2][3] + p.m[2][1];
+        frustumBottom.w = p.m[3][3] + p.m[3][1];
     }
 
     //    HINSTANCE hInstance;
@@ -149,7 +161,7 @@ struct Supervisor
     //    LPDIRECTINPUTDEVICE8A controller;
     SDL_GameController *gameController;
     //    DIDEVCAPS controllerCaps;
-    SDL_Window *gameWindow;
+    //    SDL_Window *gameWindow;
     ZunMatrix viewMatrix;
     ZunMatrix projectionMatrix;
     ZunViewport viewport;
@@ -183,6 +195,10 @@ struct Supervisor
     u8 colorMode16Bits;
 
     u32 startupTimeBeforeMenuMusic;
+
+    ZunVec4 frustumTop;
+    ZunVec4 frustumBottom;
+
     //    D3DCAPS8 d3dCaps;
 };
 

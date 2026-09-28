@@ -27,13 +27,13 @@
 //   The scale is from 0 (no volume modification) to -10,000 (subtraction of 100 decibels, and basically silent).
 //   20 decibels affects wave amplitude by a factor of 10
 
-SoundBufferIdxVolume g_SoundBufferIdxVol[32] = {
+static const SoundBufferIdxVolume g_SoundBufferIdxVol[32] = {
     {0, -1500}, {0, -2000}, {1, -1200}, {1, -1400}, {2, -1000},  {3, -500},   {4, -500},   {5, -1700},
     {6, -1700}, {7, -1700}, {8, -1000}, {9, -1000}, {10, -1900}, {11, -1200}, {12, -900},  {5, -1500},
     {13, -900}, {14, -900}, {15, -600}, {16, -400}, {17, -1100}, {18, -900},  {5, -1800},  {6, -1800},
     {7, -1800}, {19, -300}, {20, -600}, {21, -800}, {22, -100},  {23, -500},  {24, -1000}, {25, -1000},
 };
-const char *g_SFXList[26] = {
+static const char *const g_SFXList[26] = {
     "data/wav/plst00.wav", "data/wav/enep00.wav",   "data/wav/pldead00.wav", "data/wav/power0.wav",
     "data/wav/power1.wav", "data/wav/tan00.wav",    "data/wav/tan01.wav",    "data/wav/tan02.wav",
     "data/wav/ok00.wav",   "data/wav/cancel00.wav", "data/wav/select00.wav", "data/wav/gun00.wav",
@@ -91,11 +91,11 @@ ZunResult SoundPlayer::InitializeDSound()
     //this->backgroundMusicThreadHandle = std::thread(&SoundPlayer::BackgroundMusicPlayerThread, this);
     SDL_PauseAudioDevice(this->audioDev, 0);
 
-    GameErrorContext::Log(&g_GameErrorContext, TH_DBG_SOUNDPLAYER_INIT_SUCCESS);
+    g_GameErrorContext.Log(TH_DBG_SOUNDPLAYER_INIT_SUCCESS);
     return ZUN_SUCCESS;
 
 fail:
-    GameErrorContext::Log(&g_GameErrorContext, TH_ERR_SOUNDPLAYER_FAILED_TO_INITIALIZE_OBJECT);
+    g_GameErrorContext.Log(TH_ERR_SOUNDPLAYER_FAILED_TO_INITIALIZE_OBJECT);
     return ZUN_ERROR;
 }
 
@@ -144,12 +144,12 @@ void SoundPlayer::FadeOut(f32 seconds)
 {
     if (this->backgroundMusic.srcWav.fileStream != NULL)
     {
-        backgroundMusic.fadeoutLen = seconds * 44100;
-        backgroundMusic.fadeoutProgress = 0;
+        this->backgroundMusic.fadeoutLen = seconds * 44100;
+        this->backgroundMusic.fadeoutProgress = 0;
     }
 }
 
-ZunResult SoundPlayer::LoadWav(char *path)
+ZunResult SoundPlayer::LoadWav(const char *path)
 {
     SDL_RWops *fileStream;
     char idBuf[4];
@@ -287,7 +287,7 @@ fail:
     return ZUN_ERROR;
 }
 
-ZunResult SoundPlayer::LoadPos(char *path)
+ZunResult SoundPlayer::LoadPos(const char *path)
 {
     u8 *fileData;
 
@@ -334,7 +334,7 @@ ZunResult SoundPlayer::InitSoundBuffers()
         if (this->LoadSound(idx, g_SFXList[g_SoundBufferIdxVol[idx].bufferIdx],
                             1.0f / ZUN_POWF(10.0f, (float)g_SoundBufferIdxVol[idx].volume / -2000)) != ZUN_SUCCESS)
         {
-            GameErrorContext::Log(&g_GameErrorContext, TH_ERR_SOUNDPLAYER_FAILED_TO_LOAD_SOUND_FILE, g_SFXList[idx]);
+            g_GameErrorContext.Log(TH_ERR_SOUNDPLAYER_FAILED_TO_LOAD_SOUND_FILE, g_SFXList[idx]);
             return ZUN_ERROR;
         }
 
@@ -371,7 +371,7 @@ ZunResult SoundPlayer::LoadSound(i32 idx, const char *path, f32 volumeMultiplier
     if (SDL_LoadWAV_RW(SDL_RWFromConstMem(wavRawData, g_LastFileSize), 1, &wavFormat, &wavRawSamples,
                        &wavRawSampleByteCount) == NULL)
     {
-        GameErrorContext::Log(&g_GameErrorContext, TH_ERR_NOT_A_WAV_FILE, path);
+        g_GameErrorContext.Log(TH_ERR_NOT_A_WAV_FILE, path);
         goto fail;
     }
 
@@ -646,9 +646,9 @@ void SoundPlayer::MixAudio(u32 samples)
 
     soundBufMutex.lock();
 
-    for (int i = 0; i < ARRAY_SIZE_SIGNED(soundBuffers); i++)
+    for (int i = 0; i < ARRAY_SIZE_SIGNED(this->soundBuffers); i++)
     {
-        if (!soundBuffers[i].isPlaying)
+        if (!this->soundBuffers[i].isPlaying)
         {
             continue;
         }
@@ -656,30 +656,31 @@ void SoundPlayer::MixAudio(u32 samples)
         playingChannels++;
 
         // Sounds are all mono, so we need to duplicate each sample for stereo output
-        const u32 samplesToMix = std::min(samples / 2, soundBuffers[i].len - soundBuffers[i].pos);
+        const u32 samplesToMix = std::min(samples / 2, this->soundBuffers[i].len - this->soundBuffers[i].pos);
 
         for (u32 j = 0; j < samplesToMix; j++)
         {
-            mixBuffer[j * 2] += soundBuffers[i].samples[soundBuffers[i].pos + j];
-            mixBuffer[j * 2 + 1] += soundBuffers[i].samples[soundBuffers[i].pos + j];
+            mixBuffer[j * 2] += this->soundBuffers[i].samples[this->soundBuffers[i].pos + j];
+            mixBuffer[j * 2 + 1] += this->soundBuffers[i].samples[this->soundBuffers[i].pos + j];
         }
 
-        soundBuffers[i].pos += samplesToMix;
+        this->soundBuffers[i].pos += samplesToMix;
 
-        if (soundBuffers[i].pos == soundBuffers[i].len)
+        if (this->soundBuffers[i].pos == this->soundBuffers[i].len)
         {
-            soundBuffers[i].isPlaying = false;
+            this->soundBuffers[i].isPlaying = false;
         }
     }
 
-    if (backgroundMusic.srcWav.fileStream != NULL)
+    if (this->backgroundMusic.srcWav.fileStream != NULL)
     {
         u32 samplesMixed = 0;
         f32 fadeoutMult;
 
-        if (backgroundMusic.fadeoutLen != 0)
+        if (this->backgroundMusic.fadeoutLen != 0)
         {
-            f32 fadeoutInterp = mapRange(backgroundMusic.fadeoutProgress, 0, backgroundMusic.fadeoutLen, 0, 5);
+            f32 fadeoutInterp =
+                mapRange(this->backgroundMusic.fadeoutProgress, 0, this->backgroundMusic.fadeoutLen, 0, 5);
             fadeoutMult = 1.0f / ZUN_POWF(10.0f, fadeoutInterp / 2.0f);
         }
         else
@@ -700,35 +701,35 @@ void SoundPlayer::MixAudio(u32 samples)
                 mixBuffer[samplesMixed + j * 2 + 1] += (i16)SDL_SwapLE16(sampleBuf[j * 2 + 1]) * fadeoutMult;
             }
 
-            backgroundMusic.pos += samplesToMix;
+            this->backgroundMusic.pos += samplesToMix;
             samplesMixed += samplesToMix;
 
-            if (backgroundMusic.pos == backgroundMusic.loopEnd)
+            if (this->backgroundMusic.pos == this->backgroundMusic.loopEnd)
             {
                 if (this->isLooping)
                 {
-                    backgroundMusic.pos = backgroundMusic.loopStart;
-                    SDL_RWseek(backgroundMusic.srcWav.fileStream,
-                               backgroundMusic.srcWav.dataStartOffset + backgroundMusic.pos * 4, SEEK_SET);
+                    this->backgroundMusic.pos = this->backgroundMusic.loopStart;
+                    SDL_RWseek(this->backgroundMusic.srcWav.fileStream,
+                               this->backgroundMusic.srcWav.dataStartOffset + this->backgroundMusic.pos * 4, SEEK_SET);
                 }
                 else
                 {
-                    SDL_RWclose(backgroundMusic.srcWav.fileStream);
-                    backgroundMusic.srcWav.fileStream = NULL;
+                    SDL_RWclose(this->backgroundMusic.srcWav.fileStream);
+                    this->backgroundMusic.srcWav.fileStream = NULL;
 
                     break;
                 }
             }
         }
 
-        if (backgroundMusic.fadeoutLen != 0)
+        if (this->backgroundMusic.fadeoutLen != 0)
         {
-            backgroundMusic.fadeoutProgress += samplesMixed;
+            this->backgroundMusic.fadeoutProgress += samplesMixed;
 
-            if (backgroundMusic.fadeoutProgress >= backgroundMusic.fadeoutLen)
+            if (this->backgroundMusic.fadeoutProgress >= this->backgroundMusic.fadeoutLen)
             {
-                SDL_RWclose(backgroundMusic.srcWav.fileStream);
-                backgroundMusic.srcWav.fileStream = NULL;
+                SDL_RWclose(this->backgroundMusic.srcWav.fileStream);
+                this->backgroundMusic.srcWav.fileStream = NULL;
             }
         }
 
@@ -754,6 +755,8 @@ void SoundPlayer::MixAudio(u32 samples)
         finalBuffer[i] = mixBuffer[i] / mixDivisor;
     }
 
+    SDL_QueueAudio(this->audioDev, finalBuffer.data(), samples * 2);
+}
     SDL_QueueAudio(audioDev, finalBuffer.data(), samples * 2);
 }*/
 

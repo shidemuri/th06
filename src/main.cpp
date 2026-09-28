@@ -131,7 +131,7 @@ restart:
 
     g_AnmManager = new AnmManager();
 
-    if (GameWindow::InitD3dRendering())
+    if (GameWindow::InitD3dRendering() != ZUN_SUCCESS)
     {
         g_GameErrorContext.Flush();
         return 1;
@@ -175,10 +175,8 @@ stop:
     delete g_AnmManager;
     g_AnmManager = NULL;
 
-    SDL_DestroyWindow(g_GameWindow.window);
-
-    pglExit();
-
+    if (g_GfxBackend != NULL)
+        delete g_GfxBackend;
     SDL_Quit();
 
     if (renderResult == 2)
@@ -186,7 +184,12 @@ stop:
         printf("renderResult == 2. Restarting rendering...\n");
         g_GameErrorContext.ResetContext();
 
-        GameErrorContext::Log(&g_GameErrorContext, TH_ERR_OPTION_CHANGED_RESTART);
+        g_GameErrorContext.Log(TH_ERR_OPTION_CHANGED_RESTART);
+
+        if (!g_Supervisor.cfg.windowed)
+        {
+            SDL_ShowCursor(SDL_ENABLE);
+        }
 
         goto restart;
     }

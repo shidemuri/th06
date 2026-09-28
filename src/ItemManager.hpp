@@ -34,7 +34,7 @@ struct Item
 struct ItemManager
 {
     ItemManager();
-    void SpawnItem(ZunVec3 *position, ItemType type, i32 state);
+    void SpawnItem(const ZunVec3 *position, ItemType type, i32 state);
     void OnUpdate();
     void OnDraw();
     void RemoveAllItems();

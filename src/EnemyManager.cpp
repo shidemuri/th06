@@ -14,15 +14,15 @@
 #define ITEM_TABLES 8
 
 EnemyManager g_EnemyManager;
-ChainElem g_EnemyManagerCalcChain;
-ChainElem g_EnemyManagerDrawChain;
-u8 g_RandomItems[32] = {ITEM_POWER_SMALL, ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POWER_SMALL, ITEM_POINT,
-                        ITEM_POWER_SMALL, ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POINT,       ITEM_POINT,
-                        ITEM_POWER_SMALL, ITEM_POWER_SMALL, ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POINT,
-                        ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POWER_SMALL,
-                        ITEM_POINT,       ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POWER_SMALL, ITEM_POINT,
-                        ITEM_POWER_SMALL, ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POINT,       ITEM_POINT,
-                        ITEM_POWER_SMALL, ITEM_POWER_BIG};
+static ChainElem g_EnemyManagerCalcChain;
+static ChainElem g_EnemyManagerDrawChain;
+static const u8 g_RandomItems[32] = {
+    ITEM_POWER_SMALL, ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POWER_SMALL,
+    ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POINT,       ITEM_POINT,       ITEM_POWER_SMALL, ITEM_POWER_SMALL,
+    ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POINT,       ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POWER_SMALL,
+    ITEM_POINT,       ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POWER_SMALL,
+    ITEM_POINT,       ITEM_POWER_SMALL, ITEM_POWER_SMALL, ITEM_POINT,       ITEM_POINT,       ITEM_POINT,
+    ITEM_POWER_SMALL, ITEM_POWER_BIG};
 
 void EnemyManager::Initialize()
 {
@@ -84,7 +84,7 @@ EnemyManager::EnemyManager()
     this->Initialize();
 }
 
-Enemy *EnemyManager::SpawnEnemy(i32 eclSubId, ZunVec3 *pos, i16 life, i16 itemDrop, i32 score)
+Enemy *EnemyManager::SpawnEnemy(i32 eclSubId, const ZunVec3 *pos, i16 life, i16 itemDrop, i32 score)
 {
     Enemy *newEnemy;
     i32 idx;
@@ -141,12 +141,13 @@ void EnemyManager::RunEclTimeline()
     ZunVec3 pos3;
     ZunVec3 pos2;
     ZunVec3 pos1;
-    EclTimelineInstrArgs *args4;
-    EclTimelineInstrArgs *args3;
-    EclTimelineInstrArgs *args2;
-    EclTimelineInstrArgs *args1;
+    const EclTimelineInstrArgs *args4;
+    const EclTimelineInstrArgs *args3;
+    const EclTimelineInstrArgs *args2;
+    const EclTimelineInstrArgs *args1;
     i32 subrankIncreaseFrame;
     Enemy *spawnedEnemy;
+    ZunVec3 tmpVec3;
 
     if (this->timelineInstr == NULL)
     {
@@ -174,22 +175,24 @@ void EnemyManager::RunEclTimeline()
                 if (!g_Gui.BossPresent())
                 {
                     args1 = &this->timelineInstr->args;
-                    this->SpawnEnemy(this->timelineInstr->arg0, args1->Var1AsVec(), args1->ushortVar1,
-                                     args1->ushortVar2, args1->uintVar4);
+                    tmpVec3 = *args1->Var1AsVec();
+                    this->SpawnEnemy(this->timelineInstr->arg0, &tmpVec3, args1->ushortVar1, args1->ushortVar2,
+                                     args1->uintVar4);
                 }
                 break;
             case 1:
                 if (!g_Gui.BossPresent())
                 {
-                    this->SpawnEnemy(this->timelineInstr->arg0, this->timelineInstr->args.Var1AsVec(), -1, ITEM_NO_ITEM,
-                                     -1);
+                    tmpVec3 = *this->timelineInstr->args.Var1AsVec();
+                    this->SpawnEnemy(this->timelineInstr->arg0, &tmpVec3, -1, ITEM_NO_ITEM, -1);
                 }
                 break;
             case 2:
                 if (!g_Gui.BossPresent())
                 {
                     args2 = &this->timelineInstr->args;
-                    spawnedEnemy = this->SpawnEnemy(this->timelineInstr->arg0, args2->Var1AsVec(), args2->ushortVar1,
+                    tmpVec3 = *args2->Var1AsVec();
+                    spawnedEnemy = this->SpawnEnemy(this->timelineInstr->arg0, &tmpVec3, args2->ushortVar1,
                                                     args2->ushortVar2, args2->uintVar4);
                     spawnedEnemy->flags.unk4 = 1;
                 }
@@ -197,8 +200,8 @@ void EnemyManager::RunEclTimeline()
             case 3:
                 if (!g_Gui.BossPresent())
                 {
-                    spawnedEnemy = this->SpawnEnemy(this->timelineInstr->arg0, this->timelineInstr->args.Var1AsVec(),
-                                                    -1, ITEM_NO_ITEM, -1);
+                    tmpVec3 = *this->timelineInstr->args.Var1AsVec();
+                    spawnedEnemy = this->SpawnEnemy(this->timelineInstr->arg0, &tmpVec3, -1, ITEM_NO_ITEM, -1);
                     spawnedEnemy->flags.unk4 = 1;
                 }
                 break;
@@ -483,7 +486,7 @@ void Enemy::ClampPos()
     }
 }
 
-ZunResult EnemyManager::RegisterChain(char *stgEnm1, char *stgEnm2)
+ZunResult EnemyManager::RegisterChain(const char *stgEnm1, const char *stgEnm2)
 {
     EnemyManager *mgr = &g_EnemyManager;
     mgr->Initialize();
@@ -788,6 +791,7 @@ ChainCallbackResult EnemyManager::OnDraw(EnemyManager *mgr)
                 curEnemyVm->pos = curEnemy->position + curEnemyVm->posOffset;
                 curEnemyVm->pos.z = 0.495f;
                 g_AnmManager->Draw2(curEnemyVm);
+                g_AnmManager->FlushVertexBuffer();
             }
         }
         if (curEnemy->flags.unk13 != 0)
@@ -797,6 +801,7 @@ ChainCallbackResult EnemyManager::OnDraw(EnemyManager *mgr)
         curEnemy->primaryVm.pos = curEnemy->position + curEnemy->primaryVm.posOffset;
         curEnemy->primaryVm.pos.z = 0.494f;
         g_AnmManager->Draw2(&curEnemy->primaryVm);
+        g_AnmManager->FlushVertexBuffer();
         for (curEnemyVmIdx = 4; curEnemyVmIdx < 8; curEnemyVmIdx++, curEnemyVm++)
         {
             if (0 <= curEnemyVm->anmFileIndex)

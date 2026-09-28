@@ -24,13 +24,13 @@ struct PatchouliShottypeVars
     } shotVars[2];
 };
 
-PatchouliShottypeVars g_PatchouliShottypeVars[2] = {{{{0, 3, 1}, {2, 3, 4}}}, {{{1, 4, 0}, {4, 2, 3}}}};
-i32 g_PlayerShot;
-f32 g_PlayerDistance;
-f32 g_PlayerAngle;
-f32 g_StarAngleTable[6];
-ZunVec3 g_EnemyPosVector;
-ZunVec3 g_PlayerPosVector;
+static const PatchouliShottypeVars g_PatchouliShottypeVars[2] = {{{{0, 3, 1}, {2, 3, 4}}}, {{{1, 4, 0}, {4, 2, 3}}}};
+static i32 g_PlayerShot;
+static f32 g_PlayerDistance;
+static f32 g_PlayerAngle;
+static f32 g_StarAngleTable[6];
+static ZunVec3 g_EnemyPosVector;
+static ZunVec3 g_PlayerPosVector;
 
 void MoveDirTime(Enemy *enemy, EclRawInstr *instr)
 {
@@ -38,10 +38,10 @@ void MoveDirTime(Enemy *enemy, EclRawInstr *instr)
     f32 angle;
 
     alu = &instr->args.alu;
-    angle = uf32(GetVarFloat(enemy, &alu->arg1.f32Param, NULL));
+    angle = GetVarFloatValue(enemy, alu->arg1.f32Param, NULL);
 
-    enemy->moveInterp.x = ZUN_COSF(angle) * alu->arg2.f32Param * alu->res / 2.0f;
-    enemy->moveInterp.y = ZUN_SINF(angle) * alu->arg2.f32Param * alu->res / 2.0f;
+    enemy->moveInterp.x = ZUN_COSF(angle) * alu->arg2.f32Param * (i32)alu->res / 2.0f;
+    enemy->moveInterp.y = ZUN_SINF(angle) * alu->arg2.f32Param * (i32)alu->res / 2.0f;
     enemy->moveInterp.z = 0.0f;
 
     enemy->moveInterpStartPos = enemy->position;
@@ -57,13 +57,9 @@ void MovePosTime(Enemy *enemy, EclRawInstr *instr)
     ZunVec3 newPos;
     EclRawInstrAluArgs *alu = &instr->args.alu;
 
-    newPos.x = uf32(GetVarFloat(enemy, &alu->arg1.f32Param, NULL));
-    newPos.y = uf32(GetVarFloat(enemy, &alu->arg2.f32Param, NULL));
-    newPos.z = uf32(GetVarFloat(enemy, &alu->arg3.f32Param, NULL));
-
-    //memcpy(&newPos.x, GetVarFloat(enemy, &alu->arg1.f32Param, NULL), sizeof(f32));
-    //memcpy(&newPos.y, GetVarFloat(enemy, &alu->arg2.f32Param, NULL), sizeof(f32));
-    //memcpy(&newPos.z, GetVarFloat(enemy, &alu->arg3.f32Param, NULL), sizeof(f32));
+    newPos.x = GetVarFloatValue(enemy, alu->arg1.f32Param, NULL);
+    newPos.y = GetVarFloatValue(enemy, alu->arg2.f32Param, NULL);
+    newPos.z = GetVarFloatValue(enemy, alu->arg3.f32Param, NULL);
 
     enemy->moveInterp = newPos - enemy->position;
     enemy->moveInterpStartPos = enemy->position;
@@ -75,16 +71,16 @@ void MovePosTime(Enemy *enemy, EclRawInstr *instr)
     enemy->axisSpeed = ZunVec3(0.0f, 0.0f, 0.0f);
 }
 
-void MoveTime(Enemy *enemy, EclRawInstr *instr)
+void MoveTime(Enemy *enemy, const EclRawInstr *instr)
 {
-    EclRawInstrAluArgs *alu;
+    const EclRawInstrAluArgs *alu;
     f32 angle;
 
     alu = &instr->args.alu;
     angle = uf32(GetVarFloat(enemy, &enemy->angle, NULL));
 
-    enemy->moveInterp.x = ZUN_COSF(angle) * enemy->speed * alu->res / 2.0f;
-    enemy->moveInterp.y = ZUN_SINF(angle) * enemy->speed * alu->res / 2.0f;
+    enemy->moveInterp.x = ZUN_COSF(angle) * enemy->speed * (i32)alu->res / 2.0f;
+    enemy->moveInterp.y = ZUN_SINF(angle) * enemy->speed * (i32)alu->res / 2.0f;
     enemy->moveInterp.z = 0.0f;
 
     enemy->moveInterpStartPos = enemy->position;
@@ -250,11 +246,11 @@ f32 *GetVarFloat(Enemy *enemy, f32 *eclVarId, EclValueType *valueType)
     }
 }
 
-void SetVar(Enemy *enemy, EclVarId lhs, void *rhs)
+void SetVar(Enemy *enemy, EclVarId lhs, const void *rhs)
 {
     i32 *lhsPtr;
     EclValueType lhsType;
-    i32 *rhsPtr;
+    const i32 *rhsPtr;
 
     rhsPtr = GetVar(enemy, (EclVarId *)rhs, NULL);
     lhsPtr = GetVar(enemy, &lhs, &lhsType);
@@ -273,8 +269,8 @@ void MathAdd(Enemy *enemy, EclVarId outVarId, EclVarId *lhsVarId, EclVarId *rhsV
 {
     EclValueType outType;
     i32 *outPtr;
-    i32 *lhsPtr;
-    i32 *rhsPtr;
+    const i32 *lhsPtr;
+    const i32 *rhsPtr;
 
     // Get output variable.
     outPtr = GetVar(enemy, &outVarId, &outType);
@@ -305,8 +301,8 @@ void MathSub(Enemy *enemy, EclVarId outVarId, EclVarId *lhsVarId, EclVarId *rhsV
 {
     EclValueType outType;
     i32 *outPtr;
-    i32 *lhsPtr;
-    i32 *rhsPtr;
+    const i32 *lhsPtr;
+    const i32 *rhsPtr;
 
     outPtr = GetVar(enemy, &outVarId, &outType);
     if (outType == ECL_VALUE_TYPE_INT)
@@ -335,8 +331,8 @@ void MathMul(Enemy *enemy, EclVarId outVarId, EclVarId *lhsVarId, EclVarId *rhsV
 {
     EclValueType outType;
     i32 *outPtr;
-    i32 *lhsPtr;
-    i32 *rhsPtr;
+    const i32 *lhsPtr;
+    const i32 *rhsPtr;
 
     lhsPtr = GetVar(enemy, lhsVarId, NULL);
     rhsPtr = GetVar(enemy, rhsVarId, NULL);
@@ -368,8 +364,8 @@ void MathDiv(Enemy *enemy, EclVarId outVarId, EclVarId *lhsVarId, EclVarId *rhsV
 {
     EclValueType outType;
     i32 *outPtr;
-    i32 *lhsPtr;
-    i32 *rhsPtr;
+    const i32 *lhsPtr;
+    const i32 *rhsPtr;
 
     outPtr = GetVar(enemy, &outVarId, &outType);
     if (outType == ECL_VALUE_TYPE_INT)
@@ -397,8 +393,8 @@ void MathMod(Enemy *enemy, EclVarId outVarId, EclVarId *lhsVarId, EclVarId *rhsV
 {
     EclValueType outType;
     i32 *outPtr;
-    i32 *lhsPtr;
-    i32 *rhsPtr;
+    const i32 *lhsPtr;
+    const i32 *rhsPtr;
 
     outPtr = GetVar(enemy, &outVarId, &outType);
     if (outType == ECL_VALUE_TYPE_INT)
@@ -423,29 +419,23 @@ void MathMod(Enemy *enemy, EclVarId outVarId, EclVarId *lhsVarId, EclVarId *rhsV
     return;
 }
 
-void MathAtan2(Enemy *enemy, EclVarId outVarId, f32 *x1, f32 *y1, f32 *y2, f32 *x2)
+void MathAtan2(Enemy *enemy, EclVarId outVarId, f32 x1, f32 y1, f32 y2, f32 x2)
 {
     EclValueType outType;
     f32 *outPtr;
-    f32 *y1Ptr, *x1Ptr, *x2Ptr, *y2Ptr;
+    const f32 *y1Ptr;
+    const f32 *x1Ptr;
+    const f32 *x2Ptr;
+    const f32 *y2Ptr;
 
     outPtr = (f32 *)GetVar(enemy, &outVarId, &outType);
     if (outType == ECL_VALUE_TYPE_FLOAT)
     {
-        y1Ptr = GetVarFloat(enemy, x1, NULL);
-        x1Ptr = GetVarFloat(enemy, y1, NULL);
-        y2Ptr = GetVarFloat(enemy, y2, NULL);
-        x2Ptr = GetVarFloat(enemy, x2, NULL);
-        //*outPtr = ZUN_ATAN2F(*x2Ptr - *x1Ptr, *y2Ptr - *y1Ptr);
-        
-        f32 x1, y1, x2, y2, res;
-        memcpy(&x1, x1Ptr, sizeof(f32));
-        memcpy(&y1, y1Ptr, sizeof(f32));
-        memcpy(&x2, x2Ptr, sizeof(f32));
-        memcpy(&y2, y2Ptr, sizeof(f32));
-        
-        res = ZUN_ATAN2F(x2-x1,y2-y1);
-        memcpy(outPtr, &res, sizeof(f32));
+        y1Ptr = GetVarFloat(enemy, &x1, NULL);
+        x1Ptr = GetVarFloat(enemy, &y1, NULL);
+        y2Ptr = GetVarFloat(enemy, &y2, NULL);
+        x2Ptr = GetVarFloat(enemy, &x2, NULL);
+        *outPtr = ZUN_ATAN2F(*x2Ptr - *x1Ptr, *y2Ptr - *y1Ptr);
     }
     return;
 }
@@ -940,7 +930,7 @@ void ExInsStage6Func7(Enemy *enemy, EclRawInstr *instr)
 void ExInsStage6Func8(Enemy *enemy, EclRawInstr *instr)
 {
     i32 changedBullets;
-    Bullet *currentBullet;
+    const Bullet *currentBullet;
     i32 i;
 
     changedBullets = 0;
@@ -1136,7 +1126,7 @@ void ExInsStageXFunc14(Enemy *enemy, EclRawInstr *instr)
     f32 angleCos;
     f32 angleSin;
     ZunVec3 bulletPosition;
-    Laser *currentLaser;
+    const Laser *currentLaser;
     i32 i;
     f32 positionMultiplier;
 

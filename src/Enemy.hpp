@@ -141,17 +141,17 @@ struct __attribute__((aligned(4))) Enemy //doesnt do nothing?
     static void ResetEffectArray(Enemy *enemy);
     static void UpdateEffects(Enemy *enemy);
 
-    f32 LifePercent()
+    f32 LifePercent() const
     {
         return (f32)this->life / (f32)this->maxLife;
     }
 
-    ZunVec3 HitboxDimensions(f32 shrinkFactor)
+    ZunVec3 HitboxDimensions(f32 shrinkFactor) const
     {
         return this->hitboxDimensions * (1.0f / shrinkFactor);
     }
 
-    bool HasBossTimerFinished()
+    bool HasBossTimerFinished() const
     {
         return this->bossTimer.current >= this->timerCallbackThreshold;
     }
@@ -161,12 +161,12 @@ struct __attribute__((aligned(4))) Enemy //doesnt do nothing?
         return scaleFactor * (high - low) / 32 + low;
     }
 
-    i32 BulletRankAmount1(i32 scaleFactor)
+    i32 BulletRankAmount1(i32 scaleFactor) const
     {
         return Enemy::BulletRankAmountInner(this->bulletRankAmount1Low, this->bulletRankAmount1High, scaleFactor);
     }
 
-    i32 BulletRankAmount2(i32 scaleFactor)
+    i32 BulletRankAmount2(i32 scaleFactor) const
     {
         return Enemy::BulletRankAmountInner(this->bulletRankAmount2Low, this->bulletRankAmount2High, scaleFactor);
     }
@@ -176,7 +176,7 @@ struct __attribute__((aligned(4))) Enemy //doesnt do nothing?
         return scaleFactor * (high - low) / 32 + low;
     }
 
-    f32 BulletRankSpeed(f32 scaleFactor)
+    f32 BulletRankSpeed(f32 scaleFactor) const
     {
         return Enemy::BulletRankSpeedInner(this->bulletRankSpeedLow, this->bulletRankSpeedHigh, scaleFactor);
     }
@@ -186,7 +186,7 @@ struct __attribute__((aligned(4))) Enemy //doesnt do nothing?
         return scaleFactor * (high - low) / 32 + low;
     }
 
-    i32 ShootInterval(i32 scaleFactor)
+    i32 ShootInterval(i32 scaleFactor) const
     {
         return Enemy::ShootIntervalInner(this->shootInterval / 5, -this->shootInterval / 5, scaleFactor);
     }

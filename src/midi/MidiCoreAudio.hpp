@@ -2,7 +2,10 @@
 
 #include "ZunResult.hpp"
 #include "inttypes.hpp"
-#include <alsa/asoundlib.h>
+
+#include <AudioToolbox/AudioToolbox.h>
+
+// MIDI output through Apple's built-in DLS software synthesizer.
 
 struct MidiDevice
 {
@@ -16,18 +19,6 @@ struct MidiDevice
     bool SendLongMsg(const u8 *buf, u32 len);
 
   private:
-    void Reset();
-    bool GetDestPort();
-
-    snd_seq_t *sequencer;
-
-    snd_midi_event_t *encoder;
-    u32 encoderBufferSize;
-
-    int sourcePort;
-
-    int destClient;
-    int destPort;
-
-    bool hasConnection;
+    AudioUnit synthUnit;
+    AudioUnit outputUnit;
 };

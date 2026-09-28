@@ -19,25 +19,25 @@
 // #include <d3d8types.h>
 // #include <d3dx8math.h>
 
-u32 g_ExtraLivesScores[5] = {10000000, 20000000, 40000000, 60000000, 1900000000};
+static const u32 g_ExtraLivesScores[5] = {10000000, 20000000, 40000000, 60000000, 1900000000};
 
-char *g_EclFiles[9] = {"dummy",
-                       "data/ecldata1.ecl",
-                       "data/ecldata2.ecl",
-                       "data/ecldata3.ecl",
-                       "data/ecldata4.ecl",
-                       "data/ecldata5.ecl",
-                       "data/ecldata6.ecl",
-                       "data/ecldata7.ecl",
-                       NULL};
+static const char *const g_EclFiles[9] = {"dummy",
+                                          "data/ecldata1.ecl",
+                                          "data/ecldata2.ecl",
+                                          "data/ecldata3.ecl",
+                                          "data/ecldata4.ecl",
+                                          "data/ecldata5.ecl",
+                                          "data/ecldata6.ecl",
+                                          "data/ecldata7.ecl",
+                                          NULL};
 
 struct AnmStageFiles
 {
-    char *file1;
-    char *file2;
+    const char *file1;
+    const char *file2;
 };
 
-AnmStageFiles g_AnmStageFiles[8] = {
+static const AnmStageFiles g_AnmStageFiles[8] = {
     {"dummy", "dummy"},
     {"data/stg1enm.anm", "data/stg1enm2.anm"},
     {"data/stg2enm.anm", "data/stg2enm2.anm"},
@@ -54,7 +54,7 @@ struct DifficultyInfo
     u32 maxRank;
 };
 
-DifficultyInfo g_DifficultyInfoForReplay[5] = {
+static const DifficultyInfo g_DifficultyInfoForReplay[5] = {
     // rank, minRank, maxRank
     /* EASY    */ {16, 12, 20},
     /* NORMAL  */ {16, 10, 32},
@@ -63,7 +63,7 @@ DifficultyInfo g_DifficultyInfoForReplay[5] = {
     /* EXTRA   */ {16, 14, 18},
 };
 
-DifficultyInfo g_DifficultyInfo[5] = {
+static const DifficultyInfo g_DifficultyInfo[5] = {
     // rank, minRank, maxRank
     /* EASY    */ {16, 12, 20},
     /* NORMAL  */ {16, 10, 32},
@@ -75,8 +75,8 @@ DifficultyInfo g_DifficultyInfo[5] = {
 // These are either on Supervisor.cpp or somewhere else
 GameManager g_GameManager;
 
-ChainElem g_GameManagerCalcChain;
-ChainElem g_GameManagerDrawChain;
+static ChainElem g_GameManagerCalcChain;
+static ChainElem g_GameManagerDrawChain;
 
 #define MAX_SCORE 999999999
 #define MAX_CLEARS 99
@@ -88,7 +88,7 @@ ChainElem g_GameManagerDrawChain;
 
 #define MAX_LIVES 8
 
-i32 GameManager::IsInBounds(f32 x, f32 y, f32 width, f32 height)
+i32 GameManager::IsInBounds(f32 x, f32 y, f32 width, f32 height) const
 {
     if (width / 2.0f + x < 0.0f)
     {
@@ -163,8 +163,8 @@ ChainCallbackResult GameManager::OnUpdate(GameManager *gameManager)
     SetupCamera(0);
 
     g_Supervisor.viewport.Set();
-    g_glFuncTable.glClearDepthf(1.0f);
-    g_glFuncTable.glClear(GL_DEPTH_BUFFER_BIT);
+    g_GfxBackend->SetClearDepth(1.0f);
+    g_GfxBackend->Clear(CLEAR_DEPTH_BUFFER);
 
     //    g_Supervisor.d3dDevice->SetViewport(&g_Supervisor.viewport);
     //    g_Supervisor.d3dDevice->Clear(0, NULL, D3DCLEAR_ZBUFFER, g_Stage.skyFog.color, 1.0, 0);
@@ -403,39 +403,39 @@ ZunResult GameManager::AddedCallback(GameManager *mgr)
     mgr->randomSeed = g_Rng.seed;
     if (Stage::RegisterChain(mgr->currentStage) != ZUN_SUCCESS)
     {
-        GameErrorContext::Log(&g_GameErrorContext, TH_ERR_GAMEMANAGER_FAILED_TO_INITIALIZE_STAGE);
+        g_GameErrorContext.Log(TH_ERR_GAMEMANAGER_FAILED_TO_INITIALIZE_STAGE);
         return ZUN_ERROR;
     }
 
     if (Player::RegisterChain(0) != ZUN_SUCCESS)
     {
-        GameErrorContext::Log(&g_GameErrorContext, TH_ERR_GAMEMANAGER_FAILED_TO_INITIALIZE_PLAYER);
+        g_GameErrorContext.Log(TH_ERR_GAMEMANAGER_FAILED_TO_INITIALIZE_PLAYER);
         return ZUN_ERROR;
     }
     if (BulletManager::RegisterChain("data/etama.anm") != ZUN_SUCCESS)
     {
-        GameErrorContext::Log(&g_GameErrorContext, TH_ERR_GAMEMANAGER_FAILED_TO_INITIALIZE_BULLETMANAGER);
+        g_GameErrorContext.Log(TH_ERR_GAMEMANAGER_FAILED_TO_INITIALIZE_BULLETMANAGER);
         return ZUN_ERROR;
     }
     if (EnemyManager::RegisterChain(g_AnmStageFiles[mgr->currentStage].file1,
                                     g_AnmStageFiles[mgr->currentStage].file2) != ZUN_SUCCESS)
     {
-        GameErrorContext::Log(&g_GameErrorContext, TH_ERR_GAMEMANAGER_FAILED_TO_INITIALIZE_ENEMYMANAGER);
+        g_GameErrorContext.Log(TH_ERR_GAMEMANAGER_FAILED_TO_INITIALIZE_ENEMYMANAGER);
         return ZUN_ERROR;
     }
     if (g_EclManager.Load(g_EclFiles[mgr->currentStage]) != ZUN_SUCCESS)
     {
-        GameErrorContext::Log(&g_GameErrorContext, TH_ERR_GAMEMANAGER_FAILED_TO_INITIALIZE_ECLMANAGER);
+        g_GameErrorContext.Log(TH_ERR_GAMEMANAGER_FAILED_TO_INITIALIZE_ECLMANAGER);
         return ZUN_ERROR;
     }
     if (EffectManager::RegisterChain() != ZUN_SUCCESS)
     {
-        GameErrorContext::Log(&g_GameErrorContext, TH_ERR_GAMEMANAGER_FAILED_TO_INITIALIZE_EFFECTMANAGER);
+        g_GameErrorContext.Log(TH_ERR_GAMEMANAGER_FAILED_TO_INITIALIZE_EFFECTMANAGER);
         return ZUN_ERROR;
     }
     if (Gui::RegisterChain() != ZUN_SUCCESS)
     {
-        GameErrorContext::Log(&g_GameErrorContext, TH_ERR_GAMEMANAGER_FAILED_TO_INITIALIZE_GUI);
+        g_GameErrorContext.Log(TH_ERR_GAMEMANAGER_FAILED_TO_INITIALIZE_GUI);
         return ZUN_ERROR;
     }
     if (g_GameManager.isInReplay == 0)
@@ -532,6 +532,7 @@ void GameManager::SetupCameraStageBackground(f32 extraRenderDistance)
     ZunMatrix perspectiveMatrix = perspectiveMatrixFromFOV(fov, aspectRatio, 100.0f, 10000.0f + extraRenderDistance);
     g_AnmManager->SetTransformMatrix(MATRIX_PROJECTION, perspectiveMatrix);
     g_Supervisor.projectionMatrix = perspectiveMatrix;
+    g_Supervisor.SetProjectionFrustum(perspectiveMatrix * viewMatrix);
     return;
 }
 
@@ -579,6 +580,7 @@ void GameManager::SetupCamera(f32 extraRenderDistance)
     ZunMatrix perspectiveMatrix = perspectiveMatrixFromFOV(fov, aspectRatio, 100.0f, 10000.0f + extraRenderDistance);
     g_AnmManager->SetTransformMatrix(MATRIX_PROJECTION, perspectiveMatrix);
     g_Supervisor.projectionMatrix = perspectiveMatrix;
+    g_Supervisor.SetProjectionFrustum(perspectiveMatrix * viewMatrix);
 
     return;
 }
@@ -622,7 +624,7 @@ GameManager::GameManager()
     (this->arcadeRegionSize).y = GAME_REGION_HEIGHT;
 }
 
-i32 GameManager::HasReachedMaxClears(i32 character, i32 shottype)
+i32 GameManager::HasReachedMaxClears(i32 character, i32 shottype) const
 {
     return (this->clrd[shottype + character * 2].difficultyClearedWithRetries[1] == MAX_CLEARS ||
             this->clrd[shottype + character * 2].difficultyClearedWithRetries[2] == MAX_CLEARS ||

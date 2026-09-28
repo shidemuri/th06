@@ -12,11 +12,11 @@
 #include "utils.hpp"
 // #include <d3d8.h>
 
-ChainElem g_StageCalcChain;
-ChainElem g_StageOnDrawHighPrioChain;
-ChainElem g_StageOnDrawLowPrioChain;
+static ChainElem g_StageCalcChain;
+static ChainElem g_StageOnDrawHighPrioChain;
+static ChainElem g_StageOnDrawLowPrioChain;
 
-StageFile g_StageFiles[8] = {
+static const StageFile g_StageFiles[8] = {
     {"dummy", "dummy"},
     {"data/stg1bg.anm", "data/stage1.std"},
     {"data/stg2bg.anm", "data/stage2.std"},
@@ -32,6 +32,11 @@ Stage::Stage()
 {
 }
 
+#define StdVec3Arg (*(ZunVec3Raw *)curInsn->args)
+#define StdF32Arg(index) (*(LE<f32> *)&curInsn->args[index])
+#define StdU32Arg(index) (*(LE<u32> *)&curInsn->args[index])
+#define StdI32Arg(index) (*(LE<i32> *)&curInsn->args[index])
+
 ChainCallbackResult Stage::OnUpdate(Stage *stage)
 {
     f32 posInterpRatio;
@@ -39,7 +44,7 @@ ChainCallbackResult Stage::OnUpdate(Stage *stage)
     ZunVec3 pos;
     i32 idx;
     f32 skyFogInterpRatio;
-    RawStageInstr *curInsn;
+    const RawStageInstr *curInsn;
 
     if (stage->stdData == NULL)
     {
@@ -64,14 +69,14 @@ ChainCallbackResult Stage::OnUpdate(Stage *stage)
         case STDOP_CAMERA_POSITION_KEY:
             if (curInsn->frame == -1)
             {
-                stage->positionInterpInitial = *(ZunVec3 *)curInsn->args;
+                stage->positionInterpInitial = StdVec3Arg;
                 stage->position.x = stage->positionInterpInitial.x;
                 stage->position.y = stage->positionInterpInitial.y;
                 stage->position.z = stage->positionInterpInitial.z;
             }
             else if (stage->scriptTime.current >= curInsn->frame)
             {
-                pos = *(ZunVec3 *)curInsn->args;
+                pos = StdVec3Arg;
                 stage->position.x = pos.x;
                 stage->position.y = pos.y;
                 stage->position.z = pos.z;
@@ -84,15 +89,15 @@ ChainCallbackResult Stage::OnUpdate(Stage *stage)
                     curInsn++;
                 }
                 stage->positionInterpEndTime = curInsn->frame;
-                stage->positionInterpFinal = *(ZunVec3 *)curInsn->args;
+                stage->positionInterpFinal = StdVec3Arg;
             }
             break;
         case STDOP_FOG:
             if (stage->scriptTime.current >= curInsn->frame)
             {
-                stage->skyFog.color = curInsn->args[0];
-                stage->skyFog.nearPlane = ((f32 *)curInsn->args)[1];
-                stage->skyFog.farPlane = ((f32 *)curInsn->args)[2];
+                stage->skyFog.color = StdU32Arg(0);
+                stage->skyFog.nearPlane = StdF32Arg(1);
+                stage->skyFog.farPlane = StdF32Arg(2);
                 if (stage->skyFogInterpDuration == 0)
                 {
                     //                    g_Supervisor.d3dDevice->SetRenderState(D3DRS_FOGCOLOR, stage->skyFog.color);
@@ -113,7 +118,7 @@ ChainCallbackResult Stage::OnUpdate(Stage *stage)
             if (stage->scriptTime.current >= curInsn->frame)
             {
                 stage->skyFogInterpInitial = stage->skyFog;
-                stage->skyFogInterpDuration = curInsn->args[0];
+                stage->skyFogInterpDuration = StdI32Arg(0);
                 stage->skyFogInterpTimer.InitializeForPopup();
                 stage->instructionIndex++;
                 continue;
@@ -123,7 +128,7 @@ ChainCallbackResult Stage::OnUpdate(Stage *stage)
             if (stage->scriptTime.current >= curInsn->frame)
             {
                 stage->facingDirInterpInitial = stage->facingDirInterpFinal;
-                stage->facingDirInterpFinal = *(ZunVec3 *)curInsn->args;
+                stage->facingDirInterpFinal = StdVec3Arg;
                 stage->instructionIndex++;
                 continue;
             }
@@ -131,7 +136,7 @@ ChainCallbackResult Stage::OnUpdate(Stage *stage)
         case STDOP_CAMERA_FACING_INTERP_LINEAR:
             if (stage->scriptTime.current >= curInsn->frame)
             {
-                stage->facingDirInterpDuration = curInsn->args[0];
+                stage->facingDirInterpDuration = StdI32Arg(0);
                 stage->facingDirInterpTimer.InitializeForPopup();
                 stage->instructionIndex++;
                 continue;
@@ -226,18 +231,18 @@ ChainCallbackResult Stage::OnUpdate(Stage *stage)
     }
 }
 
+#undef StdVec3Arg
+#undef StdF32Arg
+#undef StdU32Arg
+#undef StdI32Arg
+
 ChainCallbackResult Stage::OnDrawHighPrio(Stage *stage)
 {
     if (stage->skyFogNeedsSetup)
     {
         stage->skyFogNeedsSetup = 0;
-        //        g_Supervisor.d3dDevice->SetRenderState(D3DRS_FOGCOLOR, stage->skyFog.color);
-
         g_AnmManager->SetFogColor(stage->skyFog.color);
     }
-
-    //    g_Supervisor.d3dDevice->SetRenderState(D3DRS_FOGSTART, *(u32 *)&stage->skyFog.nearPlane);
-    //    g_Supervisor.d3dDevice->SetRenderState(D3DRS_FOGEND, *(u32 *)&stage->skyFog.farPlane);
 
     g_AnmManager->SetFogRange(stage->skyFog.nearPlane, stage->skyFog.farPlane);
 
@@ -282,6 +287,7 @@ ChainCallbackResult Stage::OnDrawLowPrio(Stage *stage)
         }
         g_AnmManager->Draw(&stage->spellcardBackground);
     }
+    g_AnmManager->FlushVertexBuffer();
     g_Supervisor.viewport.minZ = 0.0;
     g_Supervisor.viewport.maxZ = 0.5;
     GameManager::SetupCameraStageBackground(0);
@@ -391,8 +397,8 @@ ZunResult Stage::DeletedCallback(Stage *s)
     }
     if (s->stdData != NULL)
     {
-        void *stdData = s->stdData;
-        free(stdData);
+        const void *stdData = s->stdData;
+        free((void *)stdData);
         s->stdData = NULL;
     }
 
@@ -409,7 +415,7 @@ void Stage::CutChain()
     g_Chain.Cut(&g_StageOnDrawLowPrioChain);
 }
 
-ZunResult Stage::LoadStageData(char *anmpath, char *stdpath)
+ZunResult Stage::LoadStageData(const char *anmpath, const char *stdpath)
 {
     RawStageObject *curObj;
     RawStageQuadBasic *curQuad;
@@ -425,14 +431,14 @@ ZunResult Stage::LoadStageData(char *anmpath, char *stdpath)
     this->stdData = (RawStageHeader *)FileSystem::OpenPath(stdpath, false);
     if (this->stdData == NULL)
     {
-        GameErrorContext::Log(&g_GameErrorContext, TH_ERR_STAGE_DATA_CORRUPTED);
+        g_GameErrorContext.Log(TH_ERR_STAGE_DATA_CORRUPTED);
         return ZUN_ERROR;
     }
     this->objectsCount = this->stdData->nbObjects;
     this->quadCount = this->stdData->nbFaces;
     this->objectInstances = (RawStageObjectInstance *)(this->stdData->facesOffset + ((u8 *)this->stdData));
     this->beginningOfScript = (RawStageInstr *)(this->stdData->scriptOffset + ((u8 *)this->stdData));
-    u32 *objectOffsets = (u32 *)(this->stdData + 1);
+    const LE<u32> *objectOffsets = (LE<u32> *)(this->stdData + 1);
 
     this->objects = (RawStageObject **)malloc(sizeof(RawStageObject *) * this->objectsCount);
 
@@ -461,8 +467,8 @@ ZunResult Stage::LoadStageData(char *anmpath, char *stdpath)
 ZunResult Stage::UpdateObjects()
 {
     AnmVm *vm;
-    RawStageQuadBasic *objQuad;
-    RawStageQuadBasic *objQuadType1;
+    const RawStageQuadBasic *objQuad;
+    const RawStageQuadBasic *objQuadType1;
     i32 objIdx;
     i32 vmsNotFinished;
     RawStageObject *obj;
@@ -512,35 +518,27 @@ ZunResult Stage::RenderObjects(i32 zLevel)
 {
     f32 quadWidth;
     ZunVec3 projectSrc;
-    bool didDraw;
-    RawStageQuadBasic *curQuad;
+    const RawStageQuadBasic *curQuad;
     ZunVec3 quadPos;
     ZunVec3 quadScaledPos;
     RawStageObject *obj;
     ZunMatrix worldMatrix;
-    RawStageObjectInstance *instance;
+    const RawStageObjectInstance *instance;
     i32 instancesDrawn;
     AnmVm *curQuadVm;
     i32 unk8;
 
     instance = &this->objectInstances[0];
     instancesDrawn = 0;
-    didDraw = false;
     projectSrc.x = 0.0;
     projectSrc.y = 0.0;
     projectSrc.z = 0.0;
     //    D3DXMatrixIdentity(&worldMatrix);
     worldMatrix.Identity();
 
-    ZunMatrix vp = g_Supervisor.projectionMatrix * g_Supervisor.viewMatrix;
-    i32 vLeft, vRight, vTop, vBottom;
-    i32 lower = vTop = g_Supervisor.viewport.y; //yeah i fumbled the naming but i dont want to change that
-    i32 upper = vBottom = lower + g_Supervisor.viewport.height;
-    vLeft = g_Supervisor.viewport.x;
-    vRight = vLeft + g_Supervisor.viewport.width;
+    ZunVec4 frustumTop = g_Supervisor.frustumTop;
+    ZunVec4 frustumBottom = g_Supervisor.frustumBottom;
 
-    u64 startDebug = svcGetSystemTick();
-    i32 quadsDrawnDebug = 0;
     while (instance->id >= 0)
     {
         obj = this->objects[instance->id];
@@ -568,8 +566,36 @@ ZunResult Stage::RenderObjects(i32 zLevel)
             //
             // It will check them in the following order: C, G, E, A, D, H, F, B.
 
+            f32 left = obj->position.x + instance->position.x - this->position.x;
+            f32 right = left + obj->size.x;
+            f32 top = -(obj->position.y + instance->position.y - this->position.y);
+            f32 bottom = top - obj->size.y;
+            f32 back = obj->position.z + instance->position.z - this->position.z;
+            f32 front = back + obj->size.z;
+
+            ZunVec3 helperCube[8] = {ZunVec3(left, top, front),    ZunVec3(left, bottom, front),
+                                     ZunVec3(left, bottom, back),  ZunVec3(left, top, back),
+                                     ZunVec3(right, top, front),   ZunVec3(right, bottom, front),
+                                     ZunVec3(right, bottom, back), ZunVec3(right, top, back)};
+
+            bool topVisible = false;
+            bool bottomVisible = false;
+
+            for (int i = 0; i < 8; i++)
+            {
+                if (frustumTop.calcDot(helperCube[i]) >= 0.0f)
+                    topVisible = true;
+                if (frustumBottom.calcDot(helperCube[i]) >= 0.0f)
+                    bottomVisible = true;
+            }
+
+            if (!topVisible || !bottomVisible)
+            {
+                goto skip;
+            }
+
             // It first starts by checking point C
-            worldMatrix.m[3][0] = obj->position.x + instance->position.x - this->position.x;
+            /*worldMatrix.m[3][0] = obj->position.x + instance->position.x - this->position.x;
             worldMatrix.m[3][1] = -(obj->position.y + instance->position.y - this->position.y);
             worldMatrix.m[3][2] = obj->position.z + instance->position.z - this->position.z + obj->size.z;
             projectVec3(quadPos, projectSrc, g_Supervisor.viewport, g_Supervisor.projectionMatrix,
@@ -654,11 +680,9 @@ ZunResult Stage::RenderObjects(i32 zLevel)
             }
 
             // If none of the points were in the viewport, we can skip this object
-            // entirely.
-            goto skip;
+            // entirely.*/
+
         render:
-            didDraw = true;
-            startDebug = svcGetSystemTick();
             while (0 <= curQuad->type)
             {
                 curQuadVm = this->quadVms + curQuad->vmIdx;
