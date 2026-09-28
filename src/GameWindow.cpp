@@ -9,6 +9,7 @@
 #include "graphics/FixedFunctionGL.hpp"
 #include "graphics/Software.hpp"
 #include "graphics/WebGL.hpp"
+#include "graphics/Vulkan.hpp"
 #include "i18n.hpp"
 #include "utils.hpp"
 
@@ -27,7 +28,8 @@ static const struct
 {
     const char *name;
     GfxInterface *(*TryInit)();
-} s_RenderBackends[] = {{"GL 2.1 / GL ES 2.0 / WebGL", WebGL::Create},
+} s_RenderBackends[] = {{"Vulkan", Vulkan::Init},
+                        {"GL 2.1 / GL ES 2.0 / WebGL", WebGL::Create},
                         {"Fixed function GL(ES)", FixedFunctionGL::Init},
                         {"Software fallback (VERY SLOW)", Software::Init}};
 
