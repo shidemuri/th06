@@ -408,7 +408,7 @@ inline f32 EdgeFunction(ZunVec3 v0, ZunVec3 v1, ZunVec3 v2)
 
 inline u8 AlphaBlendU8(u8 src, u8 dst, u8 a, u8 ia)
 {
-    return std::min(((u32)src * a + (u32)dst * ia + 128) >> 8, 255u);
+    return std::min(((u32)src * a + (u32)dst * ia + 128) >> 8, (u32)255u);
 }
 
 inline u8 LerpU8(u32 a, u32 b, u32 t)

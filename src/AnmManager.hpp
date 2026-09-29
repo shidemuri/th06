@@ -77,7 +77,6 @@ struct VertexTex1Xyzrhw
     ZunVec4 position;
     ZunVec2 textureUV;
 };
-
 // Structure of a vertex with SetVertexShade FVF set to D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW
 struct VertexTex1DiffuseXyzrhw
 {
@@ -444,7 +443,7 @@ struct AnmManager
     AnmRawEntry *anmFiles[128];
     u32 anmFilesSpriteIndexOffsets[128];
     SDL_Surface *surfaces[32];
-    GLuint surfacesCache[32]; //cache of texture handles for surfaces, refer to ApplySurfaceToBackbuffer
+    GfxTextureHandle surfacesCache[32]; //cache of texture handles for surfaces, refer to ApplySurfaceToBackbuffer
     //    SDL_Surface *surfacesBis[32];
     //    D3DXIMAGE_INFO surfaceSourceInfo[32];
     // GLuint currentTextureHandle;

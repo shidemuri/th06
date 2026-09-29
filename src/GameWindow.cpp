@@ -1,4 +1,12 @@
 #include "GameWindow.hpp"
+#ifdef __3DS__
+#include "graphics/c3d.hpp"
+#include "graphics/FixedFunctionGL.hpp"
+#else
+#include "graphics/FixedFunctionGL.hpp"
+#include "graphics/WebGL.hpp"
+#endif
+#include "graphics/Software.hpp"
 #include "AnmManager.hpp"
 #include "GameErrorContext.hpp"
 #include "ScreenEffect.hpp"
@@ -6,9 +14,6 @@
 #include "Stage.hpp"
 #include "Supervisor.hpp"
 #include "ZunMath.hpp"
-#include "graphics/FixedFunctionGL.hpp"
-#include "graphics/Software.hpp"
-#include "graphics/WebGL.hpp"
 #include "i18n.hpp"
 #include "utils.hpp"
 
@@ -27,9 +32,16 @@ static const struct
 {
     const char *name;
     GfxInterface *(*TryInit)();
-} s_RenderBackends[] = {{"GL 2.1 / GL ES 2.0 / WebGL", WebGL::Create},
-                        {"Fixed function GL(ES)", FixedFunctionGL::Init},
-                        {"Software fallback (VERY SLOW)", Software::Init}};
+}
+#ifdef __3DS__
+s_RenderBackends[] = {{"Citro3D", C3D::Create},
+                      {"Fixed function GL(ES)", FixedFunctionGL::Init},
+                      {"Software fallback (VERY SLOW)", Software::Init}};
+#else
+s_RenderBackends[] = {{"GL 2.1 / GL ES 2.0 / WebGL", WebGL::Create},
+                      {"Fixed function GL(ES)", FixedFunctionGL::Init},
+                      {"Software fallback (VERY SLOW)", Software::Init}};
+#endif
 
 RenderResult GameWindow::Render()
 {

@@ -13,7 +13,7 @@
       ],
       "defines": [
         "__3DS__",
-        "NDEBUG"
+        "DEBUG"
       ]
       
     }

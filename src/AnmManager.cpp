@@ -159,7 +159,8 @@ void AnmManager::ReleaseSurfaces(void)
         }
         if (this->surfacesCache[idx] != 0)
         {
-            g_glFuncTable.glDeleteTextures(1, &this->surfacesCache[idx]);
+            g_GfxBackend->DeleteTexture(this->surfacesCache[idx]);
+            //g_glFuncTable.glDeleteTextures(1, &this->surfacesCache[idx]);
             this->surfacesCache[idx] = 0;
         }
     }
@@ -1902,9 +1903,12 @@ ZunResult AnmManager::LoadSurface(i32 surfaceIdx, const char *path)
     SDL_Surface *surf = this->surfaces[surfaceIdx];
     u32 texW = BitCeil((u32)surf->w);
     u32 texH = BitCeil((u32)surf->h);
-    g_glFuncTable.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texW, texH, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    //g_glFuncTable.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texW, texH, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    g_GfxBackend->SetTextureImage(texW, texH, PIXEL_RGB, PIXEL_UNSIGNED_BYTE, nullptr);
     u8 *pixels = ExtractSurfacePixels(surf, 3);
-    g_glFuncTable.glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, surf->w, surf->h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    g_GfxBackend->SetTextureSubImage(0, 0, surf->w, surf->h, pixels);
+    //g_glFuncTable.glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, surf->w, surf->h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    //void FixedFunctionGL::SetTextureImage(u32 width, u32 height, PixelFormat fmt, PixelDataType type, const void *data)
     linearFree(pixels);
     //this->currentTextureHandle = previousHandle;
     //if (previousHandle != 0)
@@ -1988,7 +1992,8 @@ void AnmManager::ReleaseSurface(i32 surfaceIdx)
         this->surfaces[surfaceIdx] = NULL;
     }
     if (this->surfacesCache[surfaceIdx] != 0) {
-        g_glFuncTable.glDeleteTextures(1, &this->surfacesCache[surfaceIdx]);
+        //g_glFuncTable.glDeleteTextures(1, &this->surfacesCache[surfaceIdx]);
+        g_GfxBackend->DeleteTexture(this->surfacesCache[surfaceIdx]);
         this->surfacesCache[surfaceIdx] = 0;
     }
 }
@@ -2206,14 +2211,15 @@ void AnmManager::ApplySurfaceToColorBuffer(i32 src, const SDL_Rect &srcRect, con
 
     CreateTextureObject();
 
-    u32 textureWidth = BitCeil((u32)src->w);
-    u32 textureHeight = BitCeil((u32)src->h);
+    SDL_Surface* original = this->surfaces[src];
+    u32 textureWidth = BitCeil((u32)original->w);
+    u32 textureHeight = BitCeil((u32)original->h);
 
     g_GfxBackend->SetTextureImage(textureWidth, textureHeight, PIXEL_RGB, PIXEL_UNSIGNED_BYTE, NULL);
 
-    u8 *surfaceData = ExtractSurfacePixels(src, 3);
+    u8 *surfaceData = ExtractSurfacePixels(original, 3);
 
-    g_GfxBackend->SetTextureSubImage(0, 0, src->w, src->h, surfaceData);
+    g_GfxBackend->SetTextureSubImage(0, 0, original->w, original->h, surfaceData);
 
     delete[] surfaceData;
 
@@ -2245,7 +2251,7 @@ void AnmManager::ApplySurfaceToColorBuffer(i32 src, const SDL_Rect &srcRect, con
     this->SetColorOp(COMPONENT_ALPHA, COLOR_OP_MODULATE);
     this->SetColorOp(COMPONENT_RGB, COLOR_OP_MODULATE);
 
-    g_GfxBackend->DeleteTexture(this->currentTextureHandle);
+    //g_GfxBackend->DeleteTexture(this->currentTextureHandle);
 
     this->SetCurrentSprite(NULL);
     this->SetCurrentTexture(0);

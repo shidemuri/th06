@@ -1,6 +1,6 @@
 #pragma once
 
-#define TH_LANG TH_JP
+#define TH_LANG TH_EN
 
 // JP
 #define TH_JP_CONFIG_FILE "東方紅魔郷.cfg"

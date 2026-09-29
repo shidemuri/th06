@@ -55,8 +55,8 @@
            "externalConsole": false,
            "logging": {
                "engineLogging": true
-           },
-           "preLaunchTask": "Launch Azahar with enabled GDB"
+           }//,
+           //"preLaunchTask": "Launch Azahar with enabled GDB"
        },
     //   {
     //       "name": "3dslink/Rosalina: Build & Debug in Hardware (GDB 3dsx)",

@@ -3,6 +3,7 @@
 #include "ZunMath.hpp"
 #include "ZunResult.hpp"
 #include "inttypes.hpp"
+#include "3ds.h"
 static inline double u64_to_double(u64 value) { //libctru/os.c
 	return (((double)(u32)(value >> 32))*0x100000000ULL+(u32)value);
 }

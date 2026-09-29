@@ -64,7 +64,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++20
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:=  -lSDL2 -lSDL2main -lSDL2_image -lSDL2_ttf -liconv -lpicaGL  -lfreetype -lctru -lbz2 -lpng -ljpeg -lz -lm 
+LIBS	:=  -lSDL2 -lSDL2main -lSDL2_image -lSDL2_ttf -lcitro3d -lpicaGL  -lfreetype -lctru -lbz2 -lpng -ljpeg -lz -lm 
 	#-lpicaGL 
 	
 
@@ -100,7 +100,7 @@ GFXFILES	:=	$(foreach dir,$(GRAPHICS),$(notdir $(wildcard $(dir)/*.t3s)))
 FONTFILES	:=	$(foreach dir,$(GRAPHICS),$(notdir $(wildcard $(dir)/*.ttf)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
 
-CPPFILES    :=  $(filter-out MidiAlsa.cpp MidiWin32.cpp WebGL.cpp, $(CPPFILES))
+CPPFILES    :=  $(filter-out MidiAlsa.cpp MidiWin32.cpp MidiCoreAudio.cpp WebGL.cpp, $(CPPFILES))
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C

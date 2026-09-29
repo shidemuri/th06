@@ -10,6 +10,7 @@
 #include "Supervisor.hpp"
 #include "ZunColor.hpp"
 #include "utils.hpp"
+#include "3ds.h"
 // #include <d3d8.h>
 
 static ChainElem g_StageCalcChain;
@@ -539,6 +540,9 @@ ZunResult Stage::RenderObjects(i32 zLevel)
     ZunVec4 frustumTop = g_Supervisor.frustumTop;
     ZunVec4 frustumBottom = g_Supervisor.frustumBottom;
 
+    int quadsDrawnDebug = 0;
+
+    u64 startDebug = svcGetSystemTick();
     while (instance->id >= 0)
     {
         obj = this->objects[instance->id];
