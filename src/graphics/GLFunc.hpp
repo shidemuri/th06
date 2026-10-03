@@ -1,6 +1,10 @@
 #pragma once
 
-#include <SDL2/SDL_opengl.h>
+#include <GL/picaGL.h>
+#include <3ds.h>
+#define GLAPIENTRY
+#define SDL_GL_SwapWindow(x) pglSwapBuffers()
+//#include <SDL2/SDL_opengl.h>
 
 // Function pointers for OpenGL functions used in EoSD. This is necessary because Windows
 //   opengl32 only goes up to OpenGL 1.1 and some of the blending parameters we need are
@@ -29,6 +33,7 @@ struct GLFuncTable
     void(GLAPIENTRY *glDrawArrays)(GLenum mode, GLint first, GLsizei count);
     void(GLAPIENTRY *glEnable)(GLenum cap);
     void(GLAPIENTRY *glEnableClientState)(GLenum cap);
+    void(GLAPIENTRY *glFinish)(void);
     void(GLAPIENTRY *glFogf)(GLenum pname, GLfloat param);
     void(GLAPIENTRY *glFogfv)(GLenum pname, const GLfloat *params);
     void(GLAPIENTRY *glGenTextures)(GLsizei n, GLuint *textures);
@@ -56,7 +61,7 @@ struct GLFuncTable
     void(GLAPIENTRY *glViewport)(GLint x, GLint y, GLsizei width, GLsizei height);
 
     // GL(ES) 2.X / WebGL
-    PFNGLATTACHSHADERPROC glAttachShader;
+    /*PFNGLATTACHSHADERPROC glAttachShader;
     PFNGLBINDATTRIBLOCATIONPROC glBindAttribLocation;
     PFNGLCOMPILESHADERPROC glCompileShader;
     PFNGLCREATEPROGRAMPROC glCreateProgram;
@@ -77,7 +82,7 @@ struct GLFuncTable
     PFNGLUNIFORM4FPROC glUniform4f;
     PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
     PFNGLUSEPROGRAMPROC glUseProgram;
-    PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
+    PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;*/
 
   private:
     // GLES forms for cases where they're different

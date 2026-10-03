@@ -571,8 +571,8 @@ i16* SoundPlayer::MixAudio(u32 samples, i16* outBuffer)
             //the previous implementation read samples from the SD card one at a time which on desktop builds isn't an issue
             //because whatever the OS does idk whatever but on the 3DS its very slow
             //so now we just read everything from the SD card at once
-            u16 sampleBuf[samplesToMix * 2];
-            SDL_RWread(backgroundMusic.srcWav.fileStream, sampleBuf, sizeof(u16), samplesToMix * 2);
+            std::vector<u16> sampleBuf(samplesToMix * 2);
+            SDL_RWread(backgroundMusic.srcWav.fileStream, sampleBuf.data(), sizeof(u16), samplesToMix * 2);
             for (u32 j = 0; j < samplesToMix; j++)
             {
                 mixBuffer[samplesMixed + j * 2] += ((i16)SDL_SwapLE16(sampleBuf[j * 2])) * fadeoutMult;

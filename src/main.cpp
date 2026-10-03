@@ -164,7 +164,6 @@ restart:
         {
             break;
         }
-        gspWaitForVBlank();
     }
 
 stop:

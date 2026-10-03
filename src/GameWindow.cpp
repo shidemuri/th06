@@ -1,6 +1,5 @@
 #include "GameWindow.hpp"
 #ifdef __3DS__
-#include "graphics/c3d.hpp"
 #include "graphics/FixedFunctionGL.hpp"
 #else
 #include "graphics/FixedFunctionGL.hpp"
@@ -26,6 +25,8 @@ GfxInterface *g_GfxBackend;
 i32 g_TickCountToEffectiveFramerate;
 f64 g_LastFrameTime;
 
+extern GLFuncTable g_glFuncTable;
+
 #define FRAME_TIME (1000. / 60.)
 
 static const struct
@@ -34,9 +35,10 @@ static const struct
     GfxInterface *(*TryInit)();
 }
 #ifdef __3DS__
-s_RenderBackends[] = {{"Citro3D", C3D::Create},
+s_RenderBackends[] = {//{"Citro3D", C3D::Create},
                       {"Fixed function GL(ES)", FixedFunctionGL::Init},
-                      {"Software fallback (VERY SLOW)", Software::Init}};
+                      //{"Software fallback (VERY SLOW)", Software::Init}
+                      };
 #else
 s_RenderBackends[] = {{"GL 2.1 / GL ES 2.0 / WebGL", WebGL::Create},
                       {"Fixed function GL(ES)", FixedFunctionGL::Init},
@@ -105,7 +107,7 @@ RenderResult GameWindow::Render()
         this->curFrame++;
     }
 
-    if (g_Supervisor.cfg.windowed || g_Supervisor.ShouldRunAt60Fps())
+    /*if (g_Supervisor.cfg.windowed || g_Supervisor.ShouldRunAt60Fps())
     {
         if (this->curFrame != 0)
         {
@@ -175,7 +177,13 @@ RenderResult GameWindow::Render()
         }
         this->curFrame = 0;
         g_TickCountToEffectiveFramerate = g_TickCountToEffectiveFramerate + 1;
-    }
+    }*/
+
+    Present();
+    //g_glFuncTable.glFinish();
+    this->curFrame = 0;
+    gspWaitForVBlank();
+
     return RENDER_RESULT_KEEP_RUNNING;
 }
 

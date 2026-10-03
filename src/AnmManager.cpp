@@ -114,6 +114,32 @@ u8 *AnmManager::ExtractSurfacePixels(SDL_Surface *src, u8 pixelDepth)
     return pixelData;
 }
 
+u8 *AnmManager::ExtractSurfacePixels(i32 srcIdx, u8 pixelDepth)
+{
+    SDL_LockSurface(this->surfaces[srcIdx]);
+
+    if(this->surfaceDataCache[srcIdx]) return (u8*)this->surfaceDataCache[srcIdx];
+
+    const i32 dstPitch = this->surfaces[srcIdx]->w * pixelDepth;
+    const i32 srcPitch = this->surfaces[srcIdx]->pitch;
+    u8 *pixelData = (u8*)linearAlloc(dstPitch * this->surfaces[srcIdx]->h);
+    u8 *dstPtr = pixelData;
+    const u8 *srcPtr = (u8 *)this->surfaces[srcIdx]->pixels;
+
+    for (int i = 0; i < this->surfaces[srcIdx]->h; i++)
+    {
+        std::memcpy(dstPtr, srcPtr, dstPitch);
+        dstPtr += dstPitch;
+        srcPtr += srcPitch;
+    }
+
+    SDL_UnlockSurface(this->surfaces[srcIdx]);
+
+    this->surfaceDataCache[srcIdx] = pixelData;
+
+    return pixelData;
+}
+
 void AnmManager::FlipSurface(SDL_Surface *surface)
 {
     u8 *copyBuf;
@@ -162,6 +188,8 @@ void AnmManager::ReleaseSurfaces(void)
             g_GfxBackend->DeleteTexture(this->surfacesCache[idx]);
             //g_glFuncTable.glDeleteTextures(1, &this->surfacesCache[idx]);
             this->surfacesCache[idx] = 0;
+            if(this->surfaceDataCache[idx]) linearFree(this->surfaceDataCache[idx]);
+            this->surfaceDataCache[idx] = NULL;
         }
     }
 }
@@ -186,6 +214,7 @@ AnmManager::~AnmManager()
     }
 
     IMG_Quit();
+    linearFree(this->vertexBuffer);
 }
 
 // void AnmManager::ReleaseVertexBuffer()
@@ -204,6 +233,9 @@ AnmManager::AnmManager()
     this->maybeLoadedSpriteCount = 0;
 
     std::memset(this, 0, sizeof(AnmManager));
+
+    this->vertexBuffer = (VertexTex1Xyzrhw *)linearAlloc(sizeof(VertexTex1Xyzrhw) * 0x18000);
+
     ClearVertexBuffer();
 
     for (i32 spriteIndex = 0; spriteIndex < ARRAY_SIZE_SIGNED(this->sprites); spriteIndex++)
@@ -975,7 +1007,7 @@ void AnmManager::ClearVertexBuffer()
         return;
     }
     this->spritesToDraw = 0;
-    this->vertexBufferStartPtr = this->vertexBufferEndPtr = this->vertexBuffer;
+    this->vertexBufferStartPtr = this->vertexBufferEndPtr;// = this->vertexBuffer;
 }
 
 void AnmManager::FlushVertexBuffer()
@@ -1995,6 +2027,8 @@ void AnmManager::ReleaseSurface(i32 surfaceIdx)
         //g_glFuncTable.glDeleteTextures(1, &this->surfacesCache[surfaceIdx]);
         g_GfxBackend->DeleteTexture(this->surfacesCache[surfaceIdx]);
         this->surfacesCache[surfaceIdx] = 0;
+        if(this->surfaceDataCache[surfaceIdx]) linearFree(this->surfaceDataCache[surfaceIdx]);
+        this->surfaceDataCache[surfaceIdx] = NULL;
     }
 }
 
@@ -2209,19 +2243,20 @@ void AnmManager::ApplySurfaceToColorBuffer(i32 src, const SDL_Rect &srcRect, con
   
     this->SetProjectionMode(PROJECTION_MODE_ORTHOGRAPHIC);
 
-    CreateTextureObject();
+    //CreateTextureObject();
 
     SDL_Surface* original = this->surfaces[src];
     u32 textureWidth = BitCeil((u32)original->w);
     u32 textureHeight = BitCeil((u32)original->h);
 
-    g_GfxBackend->SetTextureImage(textureWidth, textureHeight, PIXEL_RGB, PIXEL_UNSIGNED_BYTE, NULL);
+    /*g_GfxBackend->SetTextureImage(textureWidth, textureHeight, PIXEL_RGB, PIXEL_UNSIGNED_BYTE, NULL);
 
-    u8 *surfaceData = ExtractSurfacePixels(original, 3);
+    u8 *surfaceData = ExtractSurfacePixels(src, 3);
 
-    g_GfxBackend->SetTextureSubImage(0, 0, original->w, original->h, surfaceData);
+    g_GfxBackend->SetTextureSubImage(0, 0, original->w, original->h, surfaceData);*/
+    this->SetCurrentTexture(this->surfacesCache[src]);
 
-    delete[] surfaceData;
+    //delete[] surfaceData;
 
     VertexTex1DiffuseXyz verts[4];
 

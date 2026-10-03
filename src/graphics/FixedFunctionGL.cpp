@@ -13,7 +13,7 @@ void FixedFunctionGL::SetContextFlags()
 
 GfxInterface *FixedFunctionGL::Init()
 {
-    SetContextFlags();
+    /*SetContextFlags();
 
     SDL_Init(SDL_INIT_VIDEO);
 
@@ -51,7 +51,11 @@ GfxInterface *FixedFunctionGL::Init()
         return NULL;
     }
 
-    SDL_GL_SetSwapInterval(1);
+    SDL_GL_SetSwapInterval(1);*/
+    FixedFunctionGL *self = new FixedFunctionGL();
+
+    pglInit();
+    pglSelectScreen(GFX_TOP, GFX_LEFT);
 
     g_glFuncTable.ResolveFunctions(false);
 
@@ -124,7 +128,7 @@ GfxInterface *FixedFunctionGL::Init()
 
 void FixedFunctionGL::Exit()
 {
-    if (this->glContext)
+    /*if (this->glContext)
     {
         SDL_GL_DeleteContext(this->glContext);
         this->glContext = NULL;
@@ -133,7 +137,8 @@ void FixedFunctionGL::Exit()
     {
         SDL_DestroyWindow(this->window);
         this->window = NULL;
-    }
+    }*/
+   pglExit();
 }
 
 void FixedFunctionGL::SetFogRange(f32 nearPlane, f32 farPlane)

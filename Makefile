@@ -64,7 +64,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++20
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:=  -lSDL2 -lSDL2main -lSDL2_image -lSDL2_ttf -lcitro3d -lpicaGL  -lfreetype -lctru -lbz2 -lpng -ljpeg -lz -lm 
+LIBS	:=  -lSDL2 -lSDL2main -lSDL2_image -lSDL2_ttf -lpicaGL -lfreetype -lctru -lbz2 -lpng -ljpeg -lz -lm 
 	#-lpicaGL 
 	
 

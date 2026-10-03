@@ -174,7 +174,7 @@ struct AnmManager
     u32 spritesToDraw;
     VertexTex1Xyzrhw *vertexBufferStartPtr;
     VertexTex1Xyzrhw *vertexBufferEndPtr;
-    VertexTex1Xyzrhw vertexBuffer[0x18000];
+    VertexTex1Xyzrhw *vertexBuffer;//[0x18000];
 
     u32 renderStateChangesThisFrame;
     u32 flushesThisFrame;
@@ -426,6 +426,7 @@ struct AnmManager
 
     static SDL_Surface *LoadToSurfaceWithFormat(const char *filename, SDL_PixelFormatEnum format, u8 **fileData);
     static u8 *ExtractSurfacePixels(SDL_Surface *src, u8 pixelDepth);
+    u8 *ExtractSurfacePixels(i32, u8 pixelDepth);
     static void FlipSurface(SDL_Surface *surface);
     void ApplySurfaceToColorBuffer(i32 src, const SDL_Rect &srcRect, const SDL_Rect &dstRect);
     // Creates, binds, and set parameters for a new texture
@@ -444,6 +445,7 @@ struct AnmManager
     u32 anmFilesSpriteIndexOffsets[128];
     SDL_Surface *surfaces[32];
     GfxTextureHandle surfacesCache[32]; //cache of texture handles for surfaces, refer to ApplySurfaceToBackbuffer
+    void* surfaceDataCache[32]; //cache of texture data for surfaces, refer to ApplySurfaceToBackbuffer
     //    SDL_Surface *surfacesBis[32];
     //    D3DXIMAGE_INFO surfaceSourceInfo[32];
     // GLuint currentTextureHandle;
